@@ -19,7 +19,6 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            cursor: none; /* Hide default cursor */
         }
 
         body {
@@ -128,9 +127,9 @@
             transform: translateY(1px);
         }
         
-        /* Interactive elements need cursor none still for the ghost cursor to shine */
+        /* Interactive elements hover effect */
         a {
-            cursor: none;
+            /* Standard cursor */
         }
 
     </style>
@@ -256,6 +255,15 @@
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 * alphaBase})`;
                 ctx.stroke();
+            }
+
+            // Draw leading dot
+            if (points.length > 0) {
+                const lastPoint = points[points.length - 1];
+                ctx.beginPath();
+                ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 1)`;
+                ctx.fill();
             }
 
             requestAnimationFrame(draw);
