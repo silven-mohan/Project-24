@@ -152,7 +152,7 @@ export default function LoginPage() {
     };
   }, []);
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Login attempted with:", email, password);
   };
@@ -221,12 +221,12 @@ export default function LoginPage() {
           >
             ← Back
           </Link>
-          <a
-            href="#"
+          <Link
+            href="/forgot-password"
             className="text-teal-400 hover:text-teal-300 transition-colors"
           >
             Forgot password?
-          </a>
+          </Link>
         </div>
       </main>
     </div>
