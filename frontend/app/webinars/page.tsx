@@ -5,11 +5,13 @@ import Link from "next/link";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
 import BorderGlow from "@/components/effects/BorderGlow";
 import StarBorder from "@/components/effects/StarBorder";
-import { Video, Code2, Cpu, Sparkles, Clock, Calendar, Users } from "lucide-react";
+import { Video, Code2, Cpu, Sparkles, Clock, Calendar, Users, Plus } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
+import WebinarModal from "@/components/webinars/WebinarModal";
 import "./webinars.css";
 
 export default function WebinarsPage() {
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
   const webinarCards = [
     (
       <div className="webinar-card-wrapper w-full">
@@ -292,13 +294,26 @@ export default function WebinarsPage() {
           </svg>
           Back to Home
         </Link>
-        <Link href="/login" className="group">
-          <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
-            <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
-              Sign In
-            </span>
-          </StarBorder>
-        </Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="group"
+          >
+            <StarBorder as="span" color="indigo" speed="5s" thickness={1}>
+              <span className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-indigo-100 transition-colors duration-200 group-hover:text-white">
+                <Plus className="h-4 w-4" />
+                <span>Host/Schedule</span>
+              </span>
+            </StarBorder>
+          </button>
+          <Link href="/login" className="group">
+            <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
+              <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
+                Sign In
+              </span>
+            </StarBorder>
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -322,6 +337,11 @@ export default function WebinarsPage() {
           showGradients={true}
         />
       </section>
+
+      <WebinarModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </StarfieldBackground>
   );
 }
