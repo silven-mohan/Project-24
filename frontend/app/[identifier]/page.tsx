@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import ProfileView from "@/components/social/ProfileView";
 import { getUserByIdentifier } from "@backend/db";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
@@ -41,14 +41,8 @@ export default function UniversalProfilePage() {
   }
 
   if (error || !targetId) {
-    return (
-      <StarfieldBackground className="flex items-center justify-center min-h-screen bg-[#06070f] page-offset">
-        <div className="text-center">
-          <h1 className="text-4xl font-black text-white/20 uppercase tracking-tighter mb-4">404: Identity Not Found</h1>
-          <p className="text-sm text-white/40">The user "{identifier}" does not exist in this sector.</p>
-        </div>
-      </StarfieldBackground>
-    );
+    notFound();
+    return null;
   }
 
   return <ProfileView targetUserId={targetId} />;

@@ -5,7 +5,7 @@ import StarfieldBackground from "@/components/background/StarfieldBackground";
 import BorderGlow from "@/components/effects/BorderGlow";
 import StarBorder from "@/components/effects/StarBorder";
 import {
-  Rocket,
+  Code2,
   Globe,
   Leaf,
   GraduationCap,
@@ -15,6 +15,7 @@ import {
   Coins,
   Timer,
   Users,
+  Rocket
 } from "lucide-react";
 import "./hackathons.css";
 
@@ -236,9 +237,9 @@ export default function HackathonsPage() {
       {/* Hero */}
       <header className="relative z-10 flex flex-col items-center text-center pt-32 pb-12 px-4">
         <div className="hackathons-hero-icon mb-6">
-          <Rocket className="h-10 w-10 text-cyan-400" />
+          <Code2 className="h-10 w-10 text-cyan-400" />
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-cyan-300 via-white to-cyan-300 bg-clip-text text-transparent pb-2">
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-linear-to-r from-cyan-300 via-white to-cyan-300 bg-clip-text text-transparent pb-2">
           Hackathons
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-white/60 leading-relaxed">

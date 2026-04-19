@@ -4,8 +4,7 @@ import React, { useEffect } from "react";
 import { useAuth } from "@backend/AuthProvider";
 import { useRouter } from "next/navigation";
 import ProfileView from "@/components/social/ProfileView";
-import StarfieldBackground from "@/components/background/StarfieldBackground";
-import { Loader2 } from "lucide-react";
+import ProfileSkeleton from "@/components/social/ProfileSkeleton";
 
 export default function ProfilePage() {
   const { user, userData, loading } = useAuth();
@@ -18,11 +17,7 @@ export default function ProfilePage() {
   }, [user, loading, router]);
 
   if (loading || !user || !userData) {
-    return (
-      <StarfieldBackground className="flex items-center justify-center min-h-screen bg-[#06070f]">
-        <Loader2 className="animate-spin text-cyan-500" size={32} />
-      </StarfieldBackground>
-    );
+    return <ProfileSkeleton />;
   }
 
   // Render the unified profile view for the current user using their canonical ID
