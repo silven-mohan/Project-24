@@ -177,7 +177,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
       } else {
         await unfollowUser(currentUserData.id, targetUserId);
       }
-      const status = await getRelationshipStatus(currentUserData?.id || user.uid, targetUserId);
+      const status = await getRelationshipStatus(currentUserData.id, targetUserId);
       setRelStatus(status);
     } catch (err) {
       console.error("Interaction failed:", err);
