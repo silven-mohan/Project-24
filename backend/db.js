@@ -861,29 +861,6 @@ export const createNotification = async (userId, type, payload = {}) => {
   });
 
   await batch.commit();
-
-  // --- Notification Pruning (Keep last 15, delete oldest 8) ---
-  try {
-    const qCount = query(collection(db, "notifications"), where("user_id", "==", userId));
-    const snapCount = await getDocs(qCount);
-    
-    if (snapCount.size > 15) {
-      const qOld = query(
-        collection(db, "notifications"),
-        where("user_id", "==", userId),
-        orderBy("created_at", "asc"),
-        limit(8)
-      );
-      const snapOld = await getDocs(qOld);
-      const pruneBatch = writeBatch(db);
-      snapOld.docs.forEach((doc) => pruneBatch.delete(doc.ref));
-      await pruneBatch.commit();
-      console.log(`[Cleaner] Pruned 8 notifications for ${userId}`);
-    }
-  } catch (err) {
-    console.error("[Cleaner] Pruning sequence failed:", err);
-  }
-
   return notifRef.id;
 };
 
@@ -911,6 +888,28 @@ export const markNotificationsRead = async (userId) => {
   });
 
   await batch.commit();
+
+  // --- Notification Pruning (Keep last 15, delete oldest 8) ---
+  try {
+    const qCount = query(collection(db, "notifications"), where("user_id", "==", userId));
+    const snapCount = await getDocs(qCount);
+
+    if (snapCount.size > 15) {
+      const qOld = query(
+        collection(db, "notifications"),
+        where("user_id", "==", userId),
+        orderBy("created_at", "asc"),
+        limit(8)
+      );
+      const snapOld = await getDocs(qOld);
+      const pruneBatch = writeBatch(db);
+      snapOld.docs.forEach((doc) => pruneBatch.delete(doc.ref));
+      await pruneBatch.commit();
+      console.log(`[Cleaner] Signal capacity optimized for ${userId}`);
+    }
+  } catch (err) {
+    console.error("[Cleaner] Pruning sequence failed:", err);
+  }
 };
 
 /**
