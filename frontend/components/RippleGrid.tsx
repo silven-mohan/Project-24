@@ -2,6 +2,21 @@ import { useRef, useEffect } from 'react';
 import { Renderer, Program, Triangle, Mesh } from 'ogl';
 import './RippleGrid.css';
 
+interface RippleGridProps {
+  enableRainbow?: boolean;
+  gridColor?: string;
+  rippleIntensity?: number;
+  gridSize?: number;
+  gridThickness?: number;
+  fadeDistance?: number;
+  vignetteStrength?: number;
+  glowIntensity?: number;
+  opacity?: number;
+  gridRotation?: number;
+  mouseInteraction?: boolean;
+  mouseInteractionRadius?: number;
+}
+
 const RippleGrid = ({
   enableRainbow = false,
   gridColor = '#ffffff',
@@ -15,17 +30,17 @@ const RippleGrid = ({
   gridRotation = 0,
   mouseInteraction = true,
   mouseInteractionRadius = 1
-}) => {
-  const containerRef = useRef(null);
+}: RippleGridProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const mousePositionRef = useRef({ x: 0.5, y: 0.5 });
   const targetMouseRef = useRef({ x: 0.5, y: 0.5 });
   const mouseInfluenceRef = useRef(0);
-  const uniformsRef = useRef(null);
+  const uniformsRef = useRef<any>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const hexToRgb = hex => {
+    const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result
         ? [parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255]
@@ -175,7 +190,7 @@ void main() {
       uniforms.iResolution.value = [w, h];
     };
 
-    const handleMouseMove = e => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (!mouseInteraction || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
@@ -201,7 +216,7 @@ void main() {
     }
     resize();
 
-    const render = t => {
+    const render = (t: number) => {
       uniforms.iTime.value = t * 0.001;
 
       const lerpFactor = 0.1;
@@ -237,7 +252,7 @@ void main() {
   useEffect(() => {
     if (!uniformsRef.current) return;
 
-    const hexToRgb = hex => {
+    const hexToRgb = (hex: string) => {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
       return result
         ? [parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255]
