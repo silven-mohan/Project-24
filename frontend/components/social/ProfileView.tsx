@@ -57,7 +57,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
   const [isSaving, setIsSaving] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
-  const isSelf = user?.uid === targetUserId;
+  const isSelf = currentUserData?.id === targetUserId;
 
   // 1. Fetch Target User Data & Permissions
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
         // For self-profile, sync from AuthProvider's live userData
         // Guard: skip if currentUserData hasn't loaded yet
         if (currentUserData) {
-          setTargetUserData({ ...currentUserData, id: user.uid });
+          setTargetUserData({ ...currentUserData, id: currentUserData.id });
         }
         setRelStatus('self');
       } else if (targetUserId) {
@@ -74,8 +74,8 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
         const data = await getUserByIdentifier(targetUserId);
         setTargetUserData(data);
         
-        if (user) {
-          const status = await getRelationshipStatus(user.uid, targetUserId);
+        if (currentUserData?.id) {
+          const status = await getRelationshipStatus(currentUserData.id, targetUserId);
           setRelStatus(status);
         }
       }
@@ -111,7 +111,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
       if (!user) return;
       const statusMap: Record<string, boolean> = {};
       await Promise.all(pList.map(async (p) => {
-        statusMap[p.id] = await checkIfLiked(user.uid, p.id);
+        statusMap[p.id] = await checkIfLiked(currentUserData?.id || user.uid, p.id);
       }));
       setLikedPosts(prev => ({ ...prev, ...statusMap }));
     };
@@ -150,10 +150,10 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
   const profilePhoto = displayData?.profile_picture;
   
   const handleSaveProfile = async () => {
-    if (!user?.uid) return;
+    if (!currentUserData?.id) return;
     setIsSaving(true);
     try {
-      await updateUserProfile(user.uid, {
+      await updateUserProfile(currentUserData.id, {
         username: tempUsername,
         bio: tempAbout
       });
@@ -170,14 +170,14 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
     }
   };
   const handleToggleFollow = async () => {
-    if (!user?.uid || !targetUserId || isSelf) return;
+    if (!currentUserData?.id || !targetUserId || isSelf) return;
     try {
       if (relStatus === 'none' || relStatus === 'follower') {
-        await followUser(user.uid, targetUserId);
+        await followUser(currentUserData.id, targetUserId);
       } else {
-        await unfollowUser(user.uid, targetUserId);
+        await unfollowUser(currentUserData.id, targetUserId);
       }
-      const status = await getRelationshipStatus(user.uid, targetUserId);
+      const status = await getRelationshipStatus(currentUserData?.id || user.uid, targetUserId);
       setRelStatus(status);
     } catch (err) {
       console.error("Interaction failed:", err);
@@ -185,7 +185,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
   };
 
   const handleToggleLike = async (postId: string) => {
-    if (!user?.uid) return;
+    if (!currentUserData?.id) return;
     
     // Optimistic Update: Status
     const currentlyLiked = likedPosts[postId];
@@ -203,7 +203,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
     }));
     
     // Background interaction - do not block
-    toggleLike(user.uid, postId).catch(err => {
+    toggleLike(currentUserData.id, postId).catch(err => {
       // Revert if failed
       setLikedPosts(prev => ({ ...prev, [postId]: currentlyLiked }));
       setPosts(prev => prev.map(p => {
@@ -220,10 +220,10 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
   };
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim() || !user?.uid || isPosting) return;
+    if (!newPostContent.trim() || !currentUserData?.id || isPosting) return;
     setIsPosting(true);
     try {
-      await createPost(user.uid, { caption: newPostContent });
+      await createPost(currentUserData.id, { caption: newPostContent });
       setNewPostContent("");
       setNewPostModalOpen(false);
     } catch (err) {
@@ -267,7 +267,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
               <Send size={20} />
             </Link>
 
-            {user && <NotificationBell userId={user.uid} />}
+            {currentUserData?.id && <NotificationBell userId={currentUserData.id} />}
             
             {isSelf && (
               <div className="relative">
@@ -439,7 +439,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
                           <span className="manage-post-item__text">{p.caption}</span>
                           <button 
                             className="btn-delete-post" 
-                            onClick={() => deletePost(p.id, user!.uid)}
+                            onClick={() => deletePost(p.id, currentUserData.id)}
                             title="Delete synthesis"
                           >
                             <Trash2 size={14} />
@@ -490,7 +490,7 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
             isOpen={commentModalOpen} 
             onClose={() => setCommentModalOpen(false)} 
             postId={activeCommentPostId} 
-            userId={user?.uid || ""}
+            userId={currentUserData?.id || ""}
           />
         )}
       </AnimatePresence>
