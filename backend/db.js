@@ -100,6 +100,7 @@ export const handleIdentitySynthesis = async (firebaseUser, provider) => {
       // Brand-new user: create the Firestore profile
       transaction.set(doc(db, "users", canonicalUserId), {
         uid: canonicalUserId,
+        primary_id: canonicalUserId, // Mark as primary
         email,
         username: displayName || email.split("@")[0],
         profile_picture: photoURL || null,
@@ -112,6 +113,17 @@ export const handleIdentitySynthesis = async (firebaseUser, provider) => {
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       });
+    }
+
+    // Always ensure the current login UID knows its primary link
+    if (uid !== canonicalUserId) {
+      transaction.set(doc(db, "users", uid), {
+        uid,
+        primary_id: canonicalUserId, // Linked to the canonical profile
+        username: displayName || email.split("@")[0],
+        email,
+        updated_at: serverTimestamp()
+      }, { merge: true });
     }
 
     // Always write the auth_identity link (idempotent for this provider)
@@ -226,8 +238,12 @@ export const createPost = async (userId, postData) => {
     t.startsWith("#") ? t.slice(1).toLowerCase() : t.toLowerCase()
   );
 
+  const auth = getAuth();
+  const currentUid = auth.currentUser ? auth.currentUser.uid : userId;
+
   const postRef = await addDoc(collection(db, "posts"), {
-    user_id: userId,
+    user_id: userId, // Canonical Profile ID
+    owner_uid: currentUid, // Raw Login UID
     caption,
     media,
     hashtags: normalizedHashtags,
@@ -774,7 +790,8 @@ export const createNotification = async (userId, type, payload = {}) => {
 
   const notifRef = doc(collection(db, "notifications"));
   batch.set(notifRef, {
-    user_id: userId,
+    user_id: userId, // Unified Profile ID
+    owner_uid: userId, // Backup verification
     type,
     source_user_id: payload.source_user_id || null,
     post_id: payload.post_id || null,
