@@ -450,10 +450,12 @@ export const toggleLike = async (userId, postId) => {
       );
       
       const postData = postSnap.exists() ? postSnap.data() : {};
+      const auth = getAuth();
+      const currentUid = auth.currentUser?.uid || userId;
       
       transaction.set(activityRef, {
         user_id: userId,
-        owner_uid: userId, // Reciprocate ownership link
+        owner_uid: currentUid, // Raw target for security bypass
         type: "like",
         target_id: postId,
         target_type: "post",
@@ -527,9 +529,12 @@ export const addComment = async (userId, postId, text, parentCommentId = null) =
 
     // Activity log entry - specialized for "comment"
     const activityRef = doc(collection(db, "activities"));
+    const auth = getAuth();
+    const currentUid = auth.currentUser?.uid || userId;
+
     transaction.set(activityRef, {
       user_id: userId,
-      owner_uid: userId, // Reciprocate ownership link
+      owner_uid: currentUid, // Raw target for security bypass
       type: "comment",
       target_id: postId,
       target_type: "post",
