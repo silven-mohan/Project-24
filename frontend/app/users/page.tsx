@@ -39,9 +39,10 @@ export default function UsersPage() {
         setUsers(fetchedUsers);
 
         // Fetch following status if logged in
-        if (user?.email) {
-          const followingIds = await getFollowing(user.uid);
-          setFollowingIds(new Set(followingIds));
+        if (user?.uid) {
+          const followingData = await getFollowing(user.uid);
+          const ids = followingData.map((f: any) => f.id);
+          setFollowingIds(new Set(ids));
         }
       } catch (error) {
         console.error("Error fetching data:", error);
