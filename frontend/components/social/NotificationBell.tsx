@@ -117,11 +117,9 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
             <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
               {notifications.length > 0 ? (
                 notifications.map((notif) => (
-                  <Link
+                  <div
                     key={notif.id}
-                    href={notif.post_id ? `/post/${notif.post_id}` : `/${notif.source_user_id || ''}`}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex gap-3 p-4 border-b border-white/5 transition-all hover:bg-white/3 ${!notif.is_read ? 'bg-cyan-500/3 border-l-2 border-l-cyan-500' : ''}`}
+                    className={`flex gap-3 p-4 border-b border-white/5 transition-all ${!notif.is_read ? 'bg-cyan-500/3 border-l-2 border-l-cyan-500' : ''}`}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${notif.type === 'connection' ? 'bg-purple-500/10 text-purple-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
                       {notif.type === 'follow_accept' || notif.type === 'follow_request' ? <User size={18} /> : <MessageSquare size={18} />}
@@ -134,10 +132,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
                          {notif.created_at?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || 'Just now'}
                       </p>
                     </div>
-                    <div className="flex items-center text-white/10">
-                      <ArrowRight size={14} />
-                    </div>
-                  </Link>
+                  </div>
                 ))
               ) : (
                 <div className="py-12 text-center opacity-20">

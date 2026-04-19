@@ -271,6 +271,21 @@ export const createPost = async (userId, postData) => {
       created_at: serverTimestamp(),
     });
   });
+
+  // --- Add Activity Footprint ---
+  const activityRef = doc(collection(db, "activities"));
+  const ninetyDays = Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+  batch.set(activityRef, {
+    user_id: userId,
+    owner_uid: currentUid, // Raw target for security bypass
+    type: "post",
+    target_id: postRef.id,
+    target_type: "post",
+    caption: caption.slice(0, 100),
+    created_at: serverTimestamp(),
+    expires_at: ninetyDays,
+  });
+
   await batch.commit();
 
   // --- Signal Broadcast (Fan-out) ---
@@ -438,6 +453,7 @@ export const toggleLike = async (userId, postId) => {
       
       transaction.set(activityRef, {
         user_id: userId,
+        owner_uid: userId, // Reciprocate ownership link
         type: "like",
         target_id: postId,
         target_type: "post",
@@ -513,6 +529,7 @@ export const addComment = async (userId, postId, text, parentCommentId = null) =
     const activityRef = doc(collection(db, "activities"));
     transaction.set(activityRef, {
       user_id: userId,
+      owner_uid: userId, // Reciprocate ownership link
       type: "comment",
       target_id: postId,
       target_type: "post",
