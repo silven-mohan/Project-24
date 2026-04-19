@@ -138,20 +138,21 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.blocker_id == request.auth.uid;
     }
 
+    // Helper: Is the user synthesized?
+    function isSynthesized(uid, canonicalId) {
+      return exists(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + uid)) &&
+             get(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + uid)).data.user_id == canonicalId;
+    }
+
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     // NOTIFICATIONS
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
     match /notifications/{notifId} {
-      allow read: if isAuth() && (
+      allow read, update, delete: if isAuth() && (
         resource.data.user_id == request.auth.uid ||
-        get(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + request.auth.uid)).data.user_id == resource.data.user_id
+        isSynthesized(request.auth.uid, resource.data.user_id)
       );
       allow create: if isAuth(); 
-      allow update: if isAuth() && (
-        resource.data.user_id == request.auth.uid ||
-        get(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + request.auth.uid)).data.user_id == resource.data.user_id
-      );
-      allow delete: if isAuth() && resource.data.user_id == request.auth.uid;
     }
 
     // ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
@@ -160,11 +161,11 @@ service cloud.firestore {
     match /activities/{activityId} {
       allow read: if isAuth() && (
         resource.data.user_id == request.auth.uid ||
-        get(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + request.auth.uid)).data.user_id == resource.data.user_id
+        isSynthesized(request.auth.uid, resource.data.user_id)
       );
       allow create: if isAuth() && (
         request.resource.data.user_id == request.auth.uid ||
-        get(/databases/$(database)/documents/auth_identities/$(request.auth.token.firebase.sign_in_provider + ':' + request.auth.uid)).data.user_id == request.resource.data.user_id
+        isSynthesized(request.auth.uid, request.resource.data.user_id)
       );
       allow delete: if false;
     }
