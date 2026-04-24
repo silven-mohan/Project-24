@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
 import BorderGlow from "@/components/effects/BorderGlow";
@@ -15,11 +16,17 @@ import {
   Coins,
   Timer,
   Users,
-  Rocket
+  Rocket,
+  Plus,
+  Cpu
 } from "lucide-react";
+import AnimatedList from "@/components/ui/AnimatedList";
+import HackathonModal from "@/components/hackathons/HackathonModal";
+import { useAuth } from "@backend/AuthProvider";
+import { getHackathons, registerForHackathon, checkIfRegisteredForHackathon } from "@backend/db.js";
 import "./hackathons.css";
 
-type Hackathon = {
+interface Hackathon {
   id: string;
   title: string;
   description: string;
@@ -28,152 +35,12 @@ type Hackathon = {
   duration: string;
   participants: number;
   prizePool: string;
-  icon: React.ReactNode;
-  accentColor: string;
-  glowColor: string;
-  gradientColors: [string, string, string];
   tags: string[];
   status: "Live" | "Upcoming" | "Completed";
-};
-
-const hackathons: Hackathon[] = [
-  {
-    id: "ai-global",
-    title: "Global AI Hackathon 2026",
-    description:
-      "Push the frontiers of artificial intelligence. Build LLM agents, multimodal models, or creative AI tools to solve real-world problems in 72 hours.",
-    category: "Artificial Intelligence",
-    format: "Online",
-    duration: "72 Hours",
-    participants: 4520,
-    prizePool: "$50,000",
-    icon: <Rocket className="h-6 w-6" />,
-    accentColor: "#f97316",
-    glowColor: "25 85 65",
-    gradientColors: ["#f97316", "#fb923c", "#ea580c"],
-    tags: ["AI/ML", "LLM", "Agents"],
-    status: "Live",
-  },
-  {
-    id: "web3-buildathon",
-    title: "Web3 Buildathon",
-    description:
-      "Design and deploy decentralized applications. Focus on DeFi, NFTs, and zero-knowledge proofs. Join the decentralized web revolution.",
-    category: "Blockchain",
-    format: "Hybrid",
-    duration: "48 Hours",
-    participants: 1250,
-    prizePool: "$25,000",
-    icon: <Globe className="h-6 w-6" />,
-    accentColor: "#a855f7",
-    glowColor: "280 75 65",
-    gradientColors: ["#a855f7", "#c084fc", "#7c3aed"],
-    tags: ["DeFi", "Solidity", "ZK-Rollups"],
-    status: "Upcoming",
-  },
-  {
-    id: "green-tech",
-    title: "GreenTech Innovators",
-    description:
-      "Hack to save the planet. Create software or hardware solutions focusing on sustainability, clear energy, and carbon footprint reduction.",
-    category: "Climate Tech",
-    format: "Online",
-    duration: "1 Week",
-    participants: 890,
-    prizePool: "$15,000",
-    icon: <Leaf className="h-6 w-6" />,
-    accentColor: "#10b981",
-    glowColor: "160 75 60",
-    gradientColors: ["#10b981", "#34d399", "#059669"],
-    tags: ["Climate", "Sustainability", "IoT"],
-    status: "Upcoming",
-  },
-  {
-    id: "edtech-solutions",
-    title: "EdTech Builders",
-    description:
-      "Rethink education and learning management systems. Build platforms that make learning more accessible, interactive, and personalized.",
-    category: "Education",
-    format: "Online",
-    duration: "48 Hours",
-    participants: 654,
-    prizePool: "$10,000",
-    icon: <GraduationCap className="h-6 w-6" />,
-    accentColor: "#3b82f6",
-    glowColor: "220 80 65",
-    gradientColors: ["#3b82f6", "#60a5fa", "#2563eb"],
-    tags: ["EdTech", "LMS", "Accessibility"],
-    status: "Live",
-  },
-  {
-    id: "health-ui",
-    title: "HealthTech UI/UX Jam",
-    description:
-      "Design user-friendly, accessible interfaces for healthcare applications. Focus on patient portals, telemedicine dashboards, and health tracking apps.",
-    category: "Design",
-    format: "Online",
-    duration: "24 Hours",
-    participants: 412,
-    prizePool: "$5,000",
-    icon: <HeartPulse className="h-6 w-6" />,
-    accentColor: "#ec4899",
-    glowColor: "330 80 65",
-    gradientColors: ["#ec4899", "#f472b6", "#db2777"],
-    tags: ["UI/UX", "Healthcare", "Figma"],
-    status: "Live",
-  },
-  {
-    id: "open-source",
-    title: "Open Source Contributhon",
-    description:
-      "A month-long celebration of open-source software. Contribute to major repositories, fix bugs, write docs, and collaborate globally.",
-    category: "Open Source",
-    format: "Online",
-    duration: "1 Month",
-    participants: 3200,
-    prizePool: "Swag & Badges",
-    icon: <CodeSquare className="h-6 w-6" />,
-    accentColor: "#22d3ee",
-    glowColor: "190 80 70",
-    gradientColors: ["#22d3ee", "#67e8f9", "#06b6d4"],
-    tags: ["OSS", "GitHub", "Community"],
-    status: "Live",
-  },
-  {
-    id: "mobile-security",
-    title: "Mobile Security CTF",
-    description:
-      "Test your ethical hacking skills in this mobile-focused Capture The Flag. Exploit vulnerabilities in native and cross-platform apps.",
-    category: "Cybersecurity",
-    format: "In-Person",
-    duration: "24 Hours",
-    participants: 300,
-    prizePool: "$20,000",
-    icon: <Shield className="h-6 w-6" />,
-    accentColor: "#eab308",
-    glowColor: "50 85 60",
-    gradientColors: ["#eab308", "#facc15", "#ca8a04"],
-    tags: ["CTF", "Security", "Mobile"],
-    status: "Upcoming",
-  },
-  {
-    id: "fintech-disrupt",
-    title: "FinTech Disruptors",
-    description:
-      "Build the future of finance. Focus on scalable payment systems, investment platforms, and financial literacy tools for the next generation.",
-    category: "Finance",
-    format: "Hybrid",
-    duration: "48 Hours",
-    participants: 780,
-    prizePool: "$30,000",
-    icon: <Coins className="h-6 w-6" />,
-    accentColor: "#f59e0b",
-    glowColor: "38 90 65",
-    gradientColors: ["#f59e0b", "#fbbf24", "#d97706"],
-    tags: ["FinTech", "Payments", "Trading"],
-    status: "Upcoming",
-  },
-];
+  accentColor?: string;
+  glowColor?: string;
+  gradientColors?: [string, string, string];
+}
 
 const statusConfig: Record<
   Hackathon["status"],
@@ -203,6 +70,153 @@ const formatColor: Record<Hackathon["format"], string> = {
 };
 
 export default function HackathonsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fetchHackathons = async () => {
+      try {
+        const data = await getHackathons();
+        setHackathons(data as Hackathon[]);
+
+        if (user) {
+          const regStatus: Record<string, boolean> = {};
+          await Promise.all(
+            (data as Hackathon[]).map(async (hackathon) => {
+              const isReg = await checkIfRegisteredForHackathon(user.uid, hackathon.id);
+              regStatus[hackathon.id] = isReg;
+            })
+          );
+          setRegistrations(regStatus);
+        }
+      } catch (err) {
+        console.error("Failed to fetch hackathons:", err);
+      }
+    };
+    fetchHackathons();
+  }, [user]);
+
+  const handleRegister = async (hackathonId: string) => {
+    if (!user) return;
+    try {
+      await registerForHackathon(hackathonId, user.uid);
+      setRegistrations(prev => ({ ...prev, [hackathonId]: true }));
+      setHackathons(prev => prev.map(h => h.id === hackathonId ? { ...h, participants: h.participants + 1 } : h));
+    } catch (err) {
+      console.error("Failed to register:", err);
+    }
+  };
+
+  const getIcon = (category: string) => {
+    const cat = category.toLowerCase();
+    if (cat.includes("ai") || cat.includes("ml")) return <Cpu className="h-6 w-6" />;
+    if (cat.includes("blockchain") || cat.includes("web3")) return <Globe className="h-6 w-6" />;
+    if (cat.includes("climate") || cat.includes("green")) return <Leaf className="h-6 w-6" />;
+    if (cat.includes("education")) return <GraduationCap className="h-6 w-6" />;
+    if (cat.includes("health")) return <HeartPulse className="h-6 w-6" />;
+    if (cat.includes("open source")) return <CodeSquare className="h-6 w-6" />;
+    if (cat.includes("security")) return <Shield className="h-6 w-6" />;
+    if (cat.includes("finance") || cat.includes("fintech")) return <Coins className="h-6 w-6" />;
+    return <Rocket className="h-6 w-6" />;
+  };
+
+  const getTheme = (category: string) => {
+    const cat = category.toLowerCase();
+    if (cat.includes("ai")) return { accent: "#f97316", glow: "25 85 65", grad: ["#f97316", "#fb923c", "#ea580c"] };
+    if (cat.includes("blockchain")) return { accent: "#a855f7", glow: "280 75 65", grad: ["#a855f7", "#c084fc", "#7c3aed"] };
+    if (cat.includes("climate")) return { accent: "#10b981", glow: "160 75 60", grad: ["#10b981", "#34d399", "#059669"] };
+    if (cat.includes("education")) return { accent: "#3b82f6", glow: "220 80 65", grad: ["#3b82f6", "#60a5fa", "#2563eb"] };
+    if (cat.includes("health")) return { accent: "#ec4899", glow: "330 80 65", grad: ["#ec4899", "#f472b6", "#db2777"] };
+    return { accent: "#22d3ee", glow: "190 80 70", grad: ["#22d3ee", "#67e8f9", "#06b6d4"] };
+  };
+
+  const hackathonCards = hackathons.map((hackathon, idx) => {
+    const theme = getTheme(hackathon.category);
+    return (
+      <div key={hackathon.id} className="hackathon-card-wrapper w-full">
+        <BorderGlow
+          edgeSensitivity={28}
+          glowColor={hackathon.glowColor || theme.glow}
+          backgroundColor="#0a0e1a"
+          borderRadius={20}
+          glowRadius={24}
+          glowIntensity={0.7}
+          coneSpread={22}
+          animated={false}
+          colors={(hackathon.gradientColors || theme.grad) as [string, string, string]}
+          className="hackathon-card-glow h-full"
+        >
+          <article className="hackathon-card" id={`hackathon-${hackathon.id}`}>
+            <div className="hackathon-card__header">
+              <div className={`status-badge ${statusConfig[hackathon.status].badgeClass}`}>
+                <span className={`status-dot ${statusConfig[hackathon.status].dotClass}`} />
+                {statusConfig[hackathon.status].label}
+              </div>
+              <span className={`text-xs font-medium ${formatColor[hackathon.format]}`}>
+                {hackathon.format}
+              </span>
+            </div>
+
+            <div className="hackathon-card__title-row">
+              <div
+                className="hackathon-card__icon"
+                style={{ "--icon-accent": hackathon.accentColor || theme.accent } as React.CSSProperties}
+              >
+                {getIcon(hackathon.category)}
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-0.5">
+                  {hackathon.category}
+                </p>
+                <h3 className="text-lg font-semibold text-white/95 leading-snug">
+                  {hackathon.title}
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-sm text-white/55 leading-relaxed mt-3 flex-1">
+              {hackathon.description}
+            </p>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              {hackathon.tags.map((tag) => (
+                <span key={tag} className="hackathon-tag">{tag}</span>
+              ))}
+            </div>
+
+            <div className="hackathon-card__footer">
+              <div className="flex flex-col gap-1.5">
+                 <div className="flex items-center gap-4 text-xs text-white/40">
+                   <span className="flex items-center gap-1.5">
+                     <Timer className="h-3.5 w-3.5" />
+                     {hackathon.duration}
+                   </span>
+                   <span className="flex items-center gap-1.5">
+                     <Users className="h-3.5 w-3.5" />
+                     {hackathon.participants}
+                   </span>
+                 </div>
+                 <div className="text-xs font-medium text-amber-400">
+                    Prize: {hackathon.prizePool}
+                 </div>
+              </div>
+              <button
+                onClick={() => handleRegister(hackathon.id)}
+                disabled={registrations[hackathon.id]}
+                className={`hackathon-join-btn ${registrations[hackathon.id] ? "opacity-50 cursor-not-allowed" : ""}`}
+                style={{ "--btn-accent": hackathon.accentColor || theme.accent } as React.CSSProperties}
+              >
+                {registrations[hackathon.id] ? "Registered" : "Register Now"}
+              </button>
+            </div>
+          </article>
+        </BorderGlow>
+      </div>
+    );
+  });
+
   return (
     <StarfieldBackground className="relative min-h-screen w-full overflow-hidden bg-[#06070f] text-white">
       {/* Nav */}
@@ -211,27 +225,32 @@ export default function HackathonsPage() {
           href="/main"
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm font-medium"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           Back to Home
         </Link>
-        <Link href="/login" className="group">
-          <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
-            <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
-              Sign In
-            </span>
-          </StarBorder>
-        </Link>
+        <div className="flex items-center gap-4">
+          {user && (
+            <button onClick={() => setIsModalOpen(true)} className="group">
+              <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
+                <span className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
+                  <Plus className="h-4 w-4" />
+                  <span>Organize</span>
+                </span>
+              </StarBorder>
+            </button>
+          )}
+          {!user && !authLoading && (
+            <Link href="/login" className="group">
+              <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
+                <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
+                  Sign In
+                </span>
+              </StarBorder>
+            </Link>
+          )}
+        </div>
       </nav>
 
       {/* Hero */}
@@ -250,151 +269,48 @@ export default function HackathonsPage() {
         <div className="flex flex-wrap items-center justify-center gap-8 mt-10">
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-cyan-400">
-              {hackathons.reduce((a, c) => a + c.participants, 0).toLocaleString()}+
+              {hackathons.reduce((a, c) => a + (c.participants || 0), 0).toLocaleString()}+
             </span>
-            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">
-              Hackers
-            </span>
+            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">Hackers</span>
           </div>
           <div className="w-px h-8 bg-white/10" />
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-purple-400">
-              {hackathons.length}
-            </span>
-            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">
-              Events
-            </span>
+            <span className="text-2xl font-bold text-purple-400">{hackathons.length}</span>
+            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">Events</span>
           </div>
           <div className="w-px h-8 bg-white/10" />
           <div className="flex flex-col items-center">
             <span className="text-2xl font-bold text-emerald-400">
               {hackathons.filter((c) => c.status === "Live").length}
             </span>
-            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">
-              Live Now
-            </span>
-          </div>
-          <div className="w-px h-8 bg-white/10" />
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-amber-400">
-              $145K+
-            </span>
-            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">
-              In Prizes
-            </span>
+            <span className="text-xs text-white/40 uppercase tracking-wider mt-1">Live Now</span>
           </div>
         </div>
       </header>
 
-      {/* Cards grid */}
-      <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
-        <div className="hackathons-grid">
-          {hackathons.map((hackathon, idx) => (
-            <div
-              key={hackathon.id}
-              className="hackathon-card-wrapper"
-              style={{ animationDelay: `${idx * 80}ms` }}
-            >
-              <BorderGlow
-                edgeSensitivity={28}
-                glowColor={hackathon.glowColor}
-                backgroundColor="#0a0e1a"
-                borderRadius={20}
-                glowRadius={24}
-                glowIntensity={0.7}
-                coneSpread={22}
-                animated={false}
-                colors={hackathon.gradientColors}
-                className="hackathon-card-glow h-full"
-              >
-                <article className="hackathon-card" id={`hackathon-${hackathon.id}`}>
-                  {/* Status badge */}
-                  <div className="hackathon-card__header">
-                    <div
-                      className={`status-badge ${statusConfig[hackathon.status].badgeClass}`}
-                    >
-                      <span
-                        className={`status-dot ${statusConfig[hackathon.status].dotClass}`}
-                      />
-                      {statusConfig[hackathon.status].label}
-                    </div>
-                    <span
-                      className={`text-xs font-medium ${formatColor[hackathon.format]}`}
-                    >
-                      {hackathon.format}
-                    </span>
-                  </div>
-
-                  {/* Icon + Title */}
-                  <div className="hackathon-card__title-row">
-                    <div
-                      className="hackathon-card__icon"
-                      style={
-                        {
-                          "--icon-accent": hackathon.accentColor,
-                        } as React.CSSProperties
-                      }
-                    >
-                      {hackathon.icon}
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-0.5">
-                        {hackathon.category}
-                      </p>
-                      <h3 className="text-lg font-semibold text-white/95 leading-snug">
-                        {hackathon.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-white/55 leading-relaxed mt-3 flex-1">
-                    {hackathon.description}
-                  </p>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {hackathon.tags.map((tag) => (
-                      <span key={tag} className="hackathon-tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="hackathon-card__footer">
-                    <div className="flex flex-col gap-1.5">
-                       <div className="flex items-center gap-4 text-xs text-white/40">
-                         <span className="flex items-center gap-1.5">
-                           <Timer className="h-3.5 w-3.5" />
-                           {hackathon.duration}
-                         </span>
-                         <span className="flex items-center gap-1.5">
-                           <Users className="h-3.5 w-3.5" />
-                           {hackathon.participants}
-                         </span>
-                       </div>
-                       <div className="text-xs font-medium text-amber-400">
-                          Prize: {hackathon.prizePool}
-                       </div>
-                    </div>
-                    <button
-                      className="hackathon-join-btn"
-                      style={
-                        {
-                          "--btn-accent": hackathon.accentColor,
-                        } as React.CSSProperties
-                      }
-                    >
-                      Register Now
-                    </button>
-                  </div>
-                </article>
-              </BorderGlow>
-            </div>
-          ))}
-        </div>
+      {/* Cards stack using AnimatedList */}
+      <section className="relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8 pb-24">
+        {hackathons.length > 0 ? (
+          <div className="max-w-7xl mx-auto">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {hackathonCards}
+             </div>
+          </div>
+        ) : (
+          <div className="text-center py-20 text-white/40">
+            No hackathons found. Organize the first one!
+          </div>
+        )}
       </section>
+
+      <HackathonModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          getHackathons().then(data => setHackathons(data as Hackathon[]));
+        }}
+      />
     </StarfieldBackground>
   );
 }
+

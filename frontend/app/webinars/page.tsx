@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
 import BorderGlow from "@/components/effects/BorderGlow";
@@ -8,269 +8,164 @@ import StarBorder from "@/components/effects/StarBorder";
 import { Video, Code2, Cpu, Sparkles, Clock, Calendar, Users, Plus } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
 import WebinarModal from "@/components/webinars/WebinarModal";
+import { useAuth } from "@backend/AuthProvider";
+import { getWebinars, registerForWebinar, checkIfRegisteredForWebinar } from "@backend/db.js";
 import "./webinars.css";
 
+interface Webinar {
+  id: string;
+  title: string;
+  description: string;
+  speakerName: string;
+  speakerRole?: string;
+  speakerAvatar?: string;
+  type: "recorded" | "scheduled" | "live";
+  dateTime?: string;
+  videoUrl?: string;
+  tags: string[];
+  participants: number;
+}
+
 export default function WebinarsPage() {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const webinarCards = [
-    (
-      <div className="webinar-card-wrapper w-full">
-        <BorderGlow
-          edgeSensitivity={28}
-          glowColor="250 80 65"
-          backgroundColor="#0a0e1a"
-          borderRadius={20}
-          glowRadius={24}
-          glowIntensity={0.6}
-          coneSpread={22}
-          animated={false}
-          colors={["#6366f1", "#818cf8", "#4f46e5"]}
-          className="webinar-card-glow h-full"
-        >
-          <article className="webinar-card">
-            <div className="webinar-card__info">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="webinar-card__icon" style={{ "--icon-accent": "#6366f1" } as React.CSSProperties}>
-                  <Code2 className="h-7 w-7" />
-                </div>
-                <span className="webinar-upcoming-badge">
-                  Upcoming
-                </span>
+  const { user, loading: authLoading } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fetchWebinars = async () => {
+      try {
+        const data = await getWebinars();
+        setWebinars(data as Webinar[]);
+        
+        if (user) {
+          const regStatus: Record<string, boolean> = {};
+          await Promise.all(
+            (data as Webinar[]).map(async (webinar) => {
+              const isReg = await checkIfRegisteredForWebinar(user.uid, webinar.id);
+              regStatus[webinar.id] = isReg;
+            })
+          );
+          setRegistrations(regStatus);
+        }
+      } catch (err) {
+        console.error("Failed to fetch webinars:", err);
+      }
+    };
+    fetchWebinars();
+  }, [user]);
+
+  const handleRegister = async (webinarId: string) => {
+    if (!user) return;
+    try {
+      await registerForWebinar(webinarId, user.uid);
+      setRegistrations(prev => ({ ...prev, [webinarId]: true }));
+      setWebinars(prev => prev.map(w => w.id === webinarId ? { ...w, participants: w.participants + 1 } : w));
+    } catch (err) {
+      console.error("Failed to register:", err);
+    }
+  };
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "recorded": return <Video className="h-7 w-7" />;
+      case "live": return <Clock className="h-7 w-7" />;
+      default: return <Code2 className="h-7 w-7" />;
+    }
+  };
+
+  const getColor = (type: string) => {
+    switch (type) {
+      case "recorded": return "#10b981";
+      case "live": return "#f43f5e";
+      default: return "#6366f1";
+    }
+  };
+
+  const webinarCards = webinars.map((webinar) => (
+    <div key={webinar.id} className="webinar-card-wrapper w-full">
+      <BorderGlow
+        edgeSensitivity={28}
+        glowColor={webinar.type === "recorded" ? "160 80 65" : webinar.type === "scheduled" ? "250 80 65" : "340 80 65"}
+        backgroundColor="#0a0e1a"
+        borderRadius={20}
+        glowRadius={24}
+        glowIntensity={0.6}
+        coneSpread={22}
+        animated={false}
+        colors={
+          webinar.type === "recorded"
+            ? ["#10b981", "#34d399", "#059669"]
+            : webinar.type === "scheduled"
+            ? ["#6366f1", "#818cf8", "#4f46e5"]
+            : ["#f43f5e", "#fb7185", "#e11d48"]
+        }
+        className="webinar-card-glow h-full"
+      >
+        <article className="webinar-card">
+          <div className="webinar-card__info">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="webinar-card__icon" style={{ "--icon-accent": getColor(webinar.type) } as React.CSSProperties}>
+                {getIcon(webinar.type)}
               </div>
-              <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
-                Building Full-Stack Apps with Next.js 15
-              </h3>
-              <p className="text-base text-white/55 leading-relaxed flex-1">
-                Learn how to build production-ready full-stack applications using the latest features in Next.js 15 — from Server Components and Server Actions to advanced caching strategies.
-              </p>
-              <div className="webinar-meta">
-                <span className="webinar-meta__item">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Apr 20, 2026
-                </span>
-                <span className="webinar-meta__item">
-                  <Clock className="h-3.5 w-3.5" />
-                  7:00 PM IST
-                </span>
-                <span className="webinar-meta__item">
-                  <Users className="h-3.5 w-3.5" />
-                  120 registered
-                </span>
+              <span className={`webinar-${webinar.type}-badge`}>
+                {webinar.type.charAt(0).toUpperCase() + webinar.type.slice(1)}
+              </span>
+            </div>
+            <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
+              {webinar.title}
+            </h3>
+            <p className="text-base text-white/55 leading-relaxed flex-1">
+              {webinar.description}
+            </p>
+            <div className="webinar-meta">
+              <span className="webinar-meta__item">
+                <Calendar className="h-3.5 w-3.5" />
+                {webinar.dateTime || "N/A"}
+              </span>
+              <span className="webinar-meta__item">
+                <Users className="h-3.5 w-3.5" />
+                {webinar.participants} {webinar.type === "recorded" ? "views" : "registered"}
+              </span>
+            </div>
+            <div className="webinar-speaker">
+              <div className="webinar-speaker__avatar">
+                {webinar.speakerAvatar || (webinar.speakerName ? webinar.speakerName.charAt(0) : "?")}
               </div>
-              <div className="webinar-speaker">
-                <div className="webinar-speaker__avatar">AK</div>
-                <div className="webinar-speaker__info">
-                  <span className="webinar-speaker__name">Aditya Kumar</span>
-                  <span className="webinar-speaker__role">Senior Frontend Engineer</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
-                <span className="webinar-tag">Next.js</span>
-                <span className="webinar-tag">React</span>
-                <span className="webinar-tag">Full-Stack</span>
-              </div>
-              <div className="flex justify-end mt-auto">
-                <span className="webinar-btn m-0 border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20">Register Now</span>
+              <div className="webinar-speaker__info">
+                <span className="webinar-speaker__name">{webinar.speakerName}</span>
+                <span className="webinar-speaker__role">{webinar.speakerRole || "Expert"}</span>
               </div>
             </div>
-          </article>
-        </BorderGlow>
-      </div>
-    ),
-    (
-      <div className="webinar-card-wrapper w-full">
-        <BorderGlow
-          edgeSensitivity={28}
-          glowColor="160 80 65"
-          backgroundColor="#0a0e1a"
-          borderRadius={20}
-          glowRadius={24}
-          glowIntensity={0.6}
-          coneSpread={22}
-          animated={false}
-          colors={["#10b981", "#34d399", "#059669"]}
-          className="webinar-card-glow h-full"
-        >
-          <article className="webinar-card">
-            <div className="webinar-card__info">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="webinar-card__icon" style={{ "--icon-accent": "#10b981" } as React.CSSProperties}>
-                  <Cpu className="h-7 w-7" />
-                </div>
-                <span className="webinar-live-badge">
-                  <span className="webinar-live-dot" />
-                  Live
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
-                Introduction to Machine Learning with Python
-              </h3>
-              <p className="text-base text-white/55 leading-relaxed flex-1">
-                A beginner-friendly session covering the fundamentals of machine learning — from data preprocessing and feature engineering to building your first models with scikit-learn.
-              </p>
-              <div className="webinar-meta">
-                <span className="webinar-meta__item">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Apr 12, 2026
-                </span>
-                <span className="webinar-meta__item">
-                  <Clock className="h-3.5 w-3.5" />
-                  Live Now
-                </span>
-                <span className="webinar-meta__item">
-                  <Users className="h-3.5 w-3.5" />
-                  85 watching
-                </span>
-              </div>
-              <div className="webinar-speaker">
-                <div className="webinar-speaker__avatar">RP</div>
-                <div className="webinar-speaker__info">
-                  <span className="webinar-speaker__name">Riya Patel</span>
-                  <span className="webinar-speaker__role">ML Research Engineer</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
-                <span className="webinar-tag">Python</span>
-                <span className="webinar-tag">Machine Learning</span>
-                <span className="webinar-tag">Beginner</span>
-              </div>
-              <div className="flex justify-end mt-auto">
-                <span className="webinar-btn m-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">Join Live</span>
-              </div>
+            <div className="flex flex-wrap gap-2 mt-6 mb-4">
+              {webinar.tags && webinar.tags.map(tag => (
+                <span key={tag} className="webinar-tag">{tag}</span>
+              ))}
             </div>
-          </article>
-        </BorderGlow>
-      </div>
-    ),
-    (
-      <div className="webinar-card-wrapper w-full">
-        <BorderGlow
-          edgeSensitivity={28}
-          glowColor="200 80 65"
-          backgroundColor="#0a0e1a"
-          borderRadius={20}
-          glowRadius={24}
-          glowIntensity={0.6}
-          coneSpread={22}
-          animated={false}
-          colors={["#0ea5e9", "#38bdf8", "#0284c7"]}
-          className="webinar-card-glow h-full"
-        >
-          <article className="webinar-card">
-            <div className="webinar-card__info">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="webinar-card__icon" style={{ "--icon-accent": "#0ea5e9" } as React.CSSProperties}>
-                  <Sparkles className="h-7 w-7" />
-                </div>
-                <span className="webinar-recorded-badge">
-                  Recorded
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
-                Mastering TypeScript — Advanced Patterns
-              </h3>
-              <p className="text-base text-white/55 leading-relaxed flex-1">
-                Deep dive into advanced TypeScript patterns including conditional types, mapped types, template literal types, and how to build type-safe libraries that scale.
-              </p>
-              <div className="webinar-meta">
-                <span className="webinar-meta__item">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Mar 28, 2026
-                </span>
-                <span className="webinar-meta__item">
-                  <Clock className="h-3.5 w-3.5" />
-                  1h 42m
-                </span>
-                <span className="webinar-meta__item">
-                  <Users className="h-3.5 w-3.5" />
-                  340 views
-                </span>
-              </div>
-              <div className="webinar-speaker">
-                <div className="webinar-speaker__avatar">SM</div>
-                <div className="webinar-speaker__info">
-                  <span className="webinar-speaker__name">Sheik Moinuddin</span>
-                  <span className="webinar-speaker__role">Full-Stack Developer</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
-                <span className="webinar-tag">TypeScript</span>
-                <span className="webinar-tag">Advanced</span>
-                <span className="webinar-tag">Patterns</span>
-              </div>
-              <div className="flex justify-end mt-auto">
-                <span className="webinar-btn m-0 border-sky-500/30 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20">Watch Recording</span>
-              </div>
+            <div className="flex justify-end mt-auto">
+              {webinar.type === "recorded" ? (
+                <a href={webinar.videoUrl} target="_blank" rel="noopener noreferrer" className="webinar-btn m-0 border-sky-500/30 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20">
+                  Watch Recording
+                </a>
+              ) : webinar.type === "live" ? (
+                <button className="webinar-btn m-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">
+                  Join Live
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRegister(webinar.id)}
+                  disabled={registrations[webinar.id]}
+                  className={`webinar-btn m-0 ${registrations[webinar.id] ? "opacity-50 cursor-not-allowed" : "border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"}`}
+                >
+                  {registrations[webinar.id] ? "Registered" : "Register Now"}
+                </button>
+              )}
             </div>
-          </article>
-        </BorderGlow>
-      </div>
-    ),
-    (
-      <div className="webinar-card-wrapper w-full">
-        <BorderGlow
-          edgeSensitivity={28}
-          glowColor="340 80 65"
-          backgroundColor="#0a0e1a"
-          borderRadius={20}
-          glowRadius={24}
-          glowIntensity={0.6}
-          coneSpread={22}
-          animated={false}
-          colors={["#f43f5e", "#fb7185", "#e11d48"]}
-          className="webinar-card-glow h-full"
-        >
-          <article className="webinar-card">
-            <div className="webinar-card__info">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="webinar-card__icon" style={{ "--icon-accent": "#f43f5e" } as React.CSSProperties}>
-                  <Video className="h-7 w-7" />
-                </div>
-                <span className="webinar-recorded-badge">
-                  Recorded
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
-                System Design for Web Applications
-              </h3>
-              <p className="text-base text-white/55 leading-relaxed flex-1">
-                Learn how to design scalable web architectures — load balancing, caching layers, database sharding, microservices communication, and handling millions of concurrent users.
-              </p>
-              <div className="webinar-meta">
-                <span className="webinar-meta__item">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Mar 15, 2026
-                </span>
-                <span className="webinar-meta__item">
-                  <Clock className="h-3.5 w-3.5" />
-                  2h 10m
-                </span>
-                <span className="webinar-meta__item">
-                  <Users className="h-3.5 w-3.5" />
-                  510 views
-                </span>
-              </div>
-              <div className="webinar-speaker">
-                <div className="webinar-speaker__avatar">VR</div>
-                <div className="webinar-speaker__info">
-                  <span className="webinar-speaker__name">Vikram Rao</span>
-                  <span className="webinar-speaker__role">Principal Architect</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-6 mb-4">
-                <span className="webinar-tag">System Design</span>
-                <span className="webinar-tag">Architecture</span>
-                <span className="webinar-tag">Scalability</span>
-              </div>
-              <div className="flex justify-end mt-auto">
-                <span className="webinar-btn m-0 border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20">Watch Recording</span>
-              </div>
-            </div>
-          </article>
-        </BorderGlow>
-      </div>
-    ),
-  ];
+          </div>
+        </article>
+      </BorderGlow>
+    </div>
+  ));
 
   return (
     <StarfieldBackground className="relative min-h-screen w-full bg-[#06070f] text-white">
@@ -295,24 +190,28 @@ export default function WebinarsPage() {
           Back to Home
         </Link>
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="group"
-          >
-            <StarBorder as="span" color="indigo" speed="5s" thickness={1}>
-              <span className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-indigo-100 transition-colors duration-200 group-hover:text-white">
-                <Plus className="h-4 w-4" />
-                <span>Host/Schedule</span>
-              </span>
-            </StarBorder>
-          </button>
-          <Link href="/login" className="group">
-            <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
-              <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
-                Sign In
-              </span>
-            </StarBorder>
-          </Link>
+          {user && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="group"
+            >
+              <StarBorder as="span" color="indigo" speed="5s" thickness={1}>
+                <span className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-indigo-100 transition-colors duration-200 group-hover:text-white">
+                  <Plus className="h-4 w-4" />
+                  <span>Host/Schedule</span>
+                </span>
+              </StarBorder>
+            </button>
+          )}
+          {!user && !authLoading && (
+            <Link href="/login" className="group">
+              <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
+                <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
+                  Sign In
+                </span>
+              </StarBorder>
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -331,16 +230,26 @@ export default function WebinarsPage() {
 
       {/* Cards stack */}
       <section className="relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8 pb-24">
-        <AnimatedList
-          items={webinarCards}
-          displayScrollbar={false}
-          showGradients={true}
-        />
+        {webinars.length > 0 ? (
+          <AnimatedList
+            items={webinarCards}
+            displayScrollbar={false}
+            showGradients={true}
+          />
+        ) : (
+          <div className="text-center py-20 text-white/40">
+            No webinars found. Host the first one!
+          </div>
+        )}
       </section>
 
       <WebinarModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          // Refresh list
+          getWebinars().then(data => setWebinars(data as Webinar[]));
+        }}
       />
     </StarfieldBackground>
   );
