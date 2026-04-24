@@ -4,16 +4,49 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Plus, Users, BookOpen, MessageSquare, Settings, Shield, Clock, Hash } from "lucide-react";
 import BorderGlow from "@/components/effects/BorderGlow";
+import { createStudyGroup } from "@backend/db.js";
+import { useAuth } from "@backend/AuthProvider";
 
 interface StudyGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 type TabType = "general" | "privacy";
 
-export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProps) {
+export default function StudyGroupModal({ isOpen, onClose, onSuccess }: StudyGroupModalProps) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("general");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    topic: "",
+    goals: "",
+    frequency: "Weekly",
+    capacity: 10,
+    recruitmentType: "Open Enrollment",
+  });
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const groupData = {
+        ...formData,
+        status: "Filling",
+        tags: formData.topic.split(",").map(t => t.trim()).filter(Boolean),
+        userId: user.uid,
+      };
+      await createStudyGroup(groupData);
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      console.error("Failed to create study group:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -91,6 +124,8 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                         type="text"
                         placeholder="e.g., The React 19 Guild"
                         className="webinar-modal-input"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       />
                     </div>
 
@@ -104,6 +139,8 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                         type="text"
                         placeholder="What will you be studying?"
                         className="webinar-modal-input"
+                        value={formData.topic}
+                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
                       />
                     </div>
 
@@ -116,6 +153,8 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                       <textarea
                         placeholder="What are the key learning outcomes for this group?"
                         className="webinar-modal-input min-h-[100px] resize-none py-3"
+                        value={formData.goals}
+                        onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
                       />
                     </div>
                   </div>
@@ -127,7 +166,11 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                         <Clock className="h-3 w-3" />
                         Meeting Frequency
                       </label>
-                      <select className="webinar-modal-input appearance-none bg-[#0d121e]">
+                      <select
+                        className="webinar-modal-input appearance-none bg-[#0d121e]"
+                        value={formData.frequency}
+                        onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                      >
                         <option>Daily</option>
                         <option>Weekly</option>
                         <option>Bi-Weekly</option>
@@ -147,6 +190,8 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                         className="webinar-modal-input"
                         min="2"
                         max="50"
+                        value={formData.capacity}
+                        onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 2 })}
                       />
                     </div>
 
@@ -157,11 +202,17 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                         Recruitment Type
                       </label>
                       <div className="flex gap-4">
-                        <button className="flex-1 p-4 rounded-xl border border-white/10 bg-white/5 text-left hover:border-purple-500/30 transition-all">
+                        <button
+                          onClick={() => setFormData({ ...formData, recruitmentType: "Open Enrollment" })}
+                          className={`flex-1 p-4 rounded-xl border ${formData.recruitmentType === "Open Enrollment" ? "border-purple-500 bg-purple-500/10" : "border-white/10 bg-white/5"} text-left hover:border-purple-500/30 transition-all`}
+                        >
                           <span className="block text-sm font-semibold text-white">Open Enrollment</span>
                           <span className="block text-xs text-white/40">Anyone can join immediately.</span>
                         </button>
-                        <button className="flex-1 p-4 rounded-xl border border-white/10 bg-white/5 text-left hover:border-purple-500/30 transition-all">
+                        <button
+                          onClick={() => setFormData({ ...formData, recruitmentType: "Invite Only" })}
+                          className={`flex-1 p-4 rounded-xl border ${formData.recruitmentType === "Invite Only" ? "border-purple-500 bg-purple-500/10" : "border-white/10 bg-white/5"} text-left hover:border-purple-500/30 transition-all`}
+                        >
                           <span className="block text-sm font-semibold text-white">Invite Only</span>
                           <span className="block text-xs text-white/40">Applications must be approved.</span>
                         </button>
@@ -178,8 +229,13 @@ export default function StudyGroupModal({ isOpen, onClose }: StudyGroupModalProp
                   >
                     Cancel
                   </button>
-                  <button className="webinar-modal-submit scheduled" style={{ background: "#a855f7", color: "white" }}>
-                    {activeTab === "general" ? "Next Step" : "Create Cohort"}
+                  <button
+                    onClick={activeTab === "general" ? () => setActiveTab("privacy") : handleSubmit}
+                    disabled={loading}
+                    className={`webinar-modal-submit scheduled ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                    style={{ background: "#a855f7", color: "white" }}
+                  >
+                    {loading ? "Initializing..." : activeTab === "general" ? "Next Step" : "Create Cohort"}
                   </button>
                 </div>
               </div>

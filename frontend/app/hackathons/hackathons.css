@@ -316,3 +316,109 @@
     border-radius: 10px;
   }
 }
+
+/* ─── Hackathon Modal ─── */
+.hackathon-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 5, 10, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.hackathon-modal-container {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  max-height: 90vh;
+  position: relative;
+}
+
+.hackathon-modal-content {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hackathon-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.hackathon-modal-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.hackathon-modal-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.hackathon-modal-tab:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.hackathon-modal-tab.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hackathon-modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.hackathon-modal-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.05);
+}
+
+.hackathon-modal-submit {
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  background: #22d3ee;
+  color: #083344;
+  box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1px solid transparent;
+}
+
+.hackathon-modal-submit:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}

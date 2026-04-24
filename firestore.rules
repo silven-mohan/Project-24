@@ -171,9 +171,6 @@ service cloud.firestore {
       allow write: if isAuth(); // Writes come from createPost in db.js
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // CHALLENGES
-    // ─────────────────────────────────────────────────────────────────────────────
     match /challenges/{challengeId} {
       allow read, create: if isAuth();
       allow update: if isAuth() && (
@@ -187,18 +184,48 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // PUZZLES
+    // WEBINARS
     // ─────────────────────────────────────────────────────────────────────────────
-    match /daily_puzzles/{puzzleId} {
-      allow read: if isAuth();
-      allow write: if false; // Only backend (Admin SDK) should write
+    match /webinars/{webinarId} {
+      allow read, create: if isAuth();
+      allow update: if isAuth() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updated_at'])
+      );
     }
 
-    match /puzzle_completions/{completionId} {
-      // completionId is {userId}_{type}_{tag}
-      allow read, create: if isAuth() && completionId.startsWith(request.auth.uid + "_");
-      allow update: if isAuth() && completionId.startsWith(request.auth.uid + "_");
-      allow delete: if false;
+    match /webinar_registrations/{registrationId} {
+      // registrationId is {userId}_{webinarId}
+      allow read, create: if isAuth() && registrationId.startsWith(request.auth.uid + "_");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STUDY GROUPS
+    // ─────────────────────────────────────────────────────────────────────────────
+    match /study_groups/{groupId} {
+      allow read, create: if isAuth();
+      allow update: if isAuth() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updated_at'])
+      );
+    }
+
+    match /study_group_members/{membershipId} {
+      // membershipId is {userId}_{groupId}
+      allow read, create: if isAuth() && membershipId.startsWith(request.auth.uid + "_");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // HACKATHONS
+    // ─────────────────────────────────────────────────────────────────────────────
+    match /hackathons/{hackathonId} {
+      allow read, create: if isAuth();
+      allow update: if isAuth() && (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updated_at'])
+      );
+    }
+
+    match /hackathon_registrations/{registrationId} {
+      // registrationId is {userId}_{hackathonId}
+      allow read, create: if isAuth() && registrationId.startsWith(request.auth.uid + "_");
     }
 
   }

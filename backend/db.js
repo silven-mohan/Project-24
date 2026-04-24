@@ -881,6 +881,217 @@ export const getChallengeById = async (challengeId) => {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// WEBINARS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new webinar.
+ */
+export const createWebinar = async (data) => {
+  const webinarRef = await addDoc(collection(db, "webinars"), {
+    ...data,
+    participants: 0,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+  return webinarRef.id;
+};
+
+/**
+ * Fetches all webinars.
+ */
+export const getWebinars = async () => {
+  const q = query(collection(db, "webinars"), orderBy("created_at", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Fetches a single webinar by ID.
+ */
+export const getWebinarById = async (webinarId) => {
+  const snap = await getDoc(doc(db, "webinars", webinarId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+/**
+ * Registers a user for a webinar.
+ */
+export const registerForWebinar = async (webinarId, userId) => {
+  const registrationId = `${userId}_${webinarId}`;
+  const registrationRef = doc(db, "webinar_registrations", registrationId);
+  const webinarRef = doc(db, "webinars", webinarId);
+
+  return await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(registrationRef);
+    if (snap.exists()) throw new Error("Already registered for this webinar.");
+
+    transaction.set(registrationRef, {
+      user_id: userId,
+      webinar_id: webinarId,
+      registered_at: serverTimestamp(),
+    });
+
+    transaction.update(webinarRef, {
+      participants: increment(1),
+      updated_at: serverTimestamp(),
+    });
+
+    return true;
+  });
+};
+
+/**
+ * Checks if user is registered for a webinar.
+ */
+export const checkIfRegisteredForWebinar = async (userId, webinarId) => {
+  if (!userId || !webinarId) return false;
+  const snap = await getDoc(doc(db, "webinar_registrations", `${userId}_${webinarId}`));
+  return snap.exists();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STUDY GROUPS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new study group.
+ */
+export const createStudyGroup = async (data) => {
+  const groupRef = await addDoc(collection(db, "study_groups"), {
+    ...data,
+    members: 0,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+  return groupRef.id;
+};
+
+/**
+ * Fetches all study groups.
+ */
+export const getStudyGroups = async () => {
+  const q = query(collection(db, "study_groups"), orderBy("created_at", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Fetches a single study group by ID.
+ */
+export const getStudyGroupById = async (groupId) => {
+  const snap = await getDoc(doc(db, "study_groups", groupId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+/**
+ * Joins a study group.
+ */
+export const joinStudyGroup = async (groupId, userId) => {
+  const membershipId = `${userId}_${groupId}`;
+  const membershipRef = doc(db, "study_group_members", membershipId);
+  const groupRef = doc(db, "study_groups", groupId);
+
+  return await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(membershipRef);
+    if (snap.exists()) throw new Error("Already a member of this group.");
+
+    transaction.set(membershipRef, {
+      user_id: userId,
+      group_id: groupId,
+      joined_at: serverTimestamp(),
+    });
+
+    transaction.update(groupRef, {
+      members: increment(1),
+      updated_at: serverTimestamp(),
+    });
+
+    return true;
+  });
+};
+
+/**
+ * Checks if user is in a study group.
+ */
+export const checkIfInStudyGroup = async (userId, groupId) => {
+  if (!userId || !groupId) return false;
+  const snap = await getDoc(doc(db, "study_group_members", `${userId}_${groupId}`));
+  return snap.exists();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HACKATHONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new hackathon.
+ */
+export const createHackathon = async (data) => {
+  const hackathonRef = await addDoc(collection(db, "hackathons"), {
+    ...data,
+    participants: 0,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+  return hackathonRef.id;
+};
+
+/**
+ * Fetches all hackathons.
+ */
+export const getHackathons = async () => {
+  const q = query(collection(db, "hackathons"), orderBy("created_at", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+/**
+ * Fetches a single hackathon by ID.
+ */
+export const getHackathonById = async (hackathonId) => {
+  const snap = await getDoc(doc(db, "hackathons", hackathonId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+/**
+ * Registers a user for a hackathon.
+ */
+export const registerForHackathon = async (hackathonId, userId) => {
+  const registrationId = `${userId}_${hackathonId}`;
+  const registrationRef = doc(db, "hackathon_registrations", registrationId);
+  const hackathonRef = doc(db, "hackathons", hackathonId);
+
+  return await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(registrationRef);
+    if (snap.exists()) throw new Error("Already registered for this hackathon.");
+
+    transaction.set(registrationRef, {
+      user_id: userId,
+      hackathon_id: hackathonId,
+      registered_at: serverTimestamp(),
+    });
+
+    transaction.update(hackathonRef, {
+      participants: increment(1),
+      updated_at: serverTimestamp(),
+    });
+
+    return true;
+  });
+};
+
+/**
+ * Checks if user is registered for a hackathon.
+ */
+export const checkIfRegisteredForHackathon = async (userId, hackathonId) => {
+  if (!userId || !hackathonId) return false;
+  const snap = await getDoc(doc(db, "hackathon_registrations", `${userId}_${hackathonId}`));
+  return snap.exists();
+};
+
+
 /**
  * Unblocks a user.
  * @param {string} blockerId

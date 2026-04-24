@@ -2,54 +2,54 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Plus, Video, Calendar, Clock, User, Tag, Layout } from "lucide-react";
+import { X, Plus, Rocket, Globe, MapPin, Trophy, Clock, Tag, Layout } from "lucide-react";
 import BorderGlow from "@/components/effects/BorderGlow";
-import { createWebinar } from "@backend/db.js";
+import { createHackathon } from "@backend/db.js";
 import { useAuth } from "@backend/AuthProvider";
 
-interface WebinarModalProps {
+interface HackathonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-type WebinarType = "recorded" | "scheduled" | "live";
+type HackathonFormat = "Online" | "In-Person" | "Hybrid";
 
-export default function WebinarModal({ isOpen, onClose, onSuccess }: WebinarModalProps) {
+export default function HackathonModal({ isOpen, onClose, onSuccess }: HackathonModalProps) {
   const { user } = useAuth();
-  const [activeType, setActiveType] = useState<WebinarType>("scheduled");
+  const [activeFormat, setActiveFormat] = useState<HackathonFormat>("Online");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    speakerName: "",
-    speakerRole: "",
-    dateTime: "",
-    videoUrl: "",
+    category: "",
+    duration: "",
+    prizePool: "",
     tags: "",
   });
 
-  const typeConfig: Record<WebinarType, { icon: any; color: string; label: string }> = {
-    recorded: { icon: Video, color: "emerald", label: "Add Recorded" },
-    scheduled: { icon: Calendar, color: "indigo", label: "Schedule" },
-    live: { icon: Clock, color: "rose", label: "Host Live" },
+  const formatConfig: Record<HackathonFormat, { icon: any; label: string }> = {
+    Online: { icon: Globe, label: "Online" },
+    Hybrid: { icon: Rocket, label: "Hybrid" },
+    "In-Person": { icon: MapPin, label: "In-Person" },
   };
 
   const handleSubmit = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const webinarData = {
+      const hackathonData = {
         ...formData,
-        type: activeType,
+        format: activeFormat,
+        status: "Upcoming",
         tags: formData.tags.split(",").map(t => t.trim()).filter(Boolean),
         userId: user.uid,
       };
-      await createWebinar(webinarData);
+      await createHackathon(hackathonData);
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error("Failed to create webinar:", err);
+      console.error("Failed to create hackathon:", err);
     } finally {
       setLoading(false);
     }
@@ -59,40 +59,34 @@ export default function WebinarModal({ isOpen, onClose, onSuccess }: WebinarModa
 
   return (
     <AnimatePresence>
-      <div className="webinar-modal-overlay">
+      <div className="hackathon-modal-overlay">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="webinar-modal-container"
+          className="hackathon-modal-container"
         >
           <BorderGlow
             edgeSensitivity={32}
-            glowColor={activeType === "recorded" ? "160 80 65" : activeType === "scheduled" ? "250 80 65" : "340 80 65"}
+            glowColor="190 80 65"
             backgroundColor="#0a0e1a"
             borderRadius={24}
             glowRadius={28}
             glowIntensity={0.65}
             coneSpread={24}
             animated={true}
-            colors={
-              activeType === "recorded"
-                ? ["#10b981", "#34d399", "#059669"]
-                : activeType === "scheduled"
-                ? ["#6366f1", "#818cf8", "#4f46e5"]
-                : ["#f43f5e", "#fb7185", "#e11d48"]
-            }
+            colors={["#22d3ee", "#67e8f9", "#06b6d4"]}
             className="w-full h-full"
           >
-            <div className="webinar-modal-content">
+            <div className="hackathon-modal-content">
               {/* Header */}
-              <div className="webinar-modal-header">
+              <div className="hackathon-modal-header">
                 <div>
                   <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Plus className="h-6 w-6 text-indigo-400" />
-                    Host a Webinar
+                    <Plus className="h-6 w-6 text-cyan-400" />
+                    Organize Hackathon
                   </h2>
-                  <p className="text-white/45 text-sm mt-1">Share your knowledge with the Project 24 community.</p>
+                  <p className="text-white/45 text-sm mt-1">Create an event and invite builders from across the globe.</p>
                 </div>
                 <button
                   onClick={onClose}
@@ -102,37 +96,36 @@ export default function WebinarModal({ isOpen, onClose, onSuccess }: WebinarModa
                 </button>
               </div>
 
-              {/* Type Switcher */}
-              <div className="webinar-modal-tabs">
-                {(Object.keys(typeConfig) as WebinarType[]).map((type) => {
-                  const Icon = typeConfig[type].icon;
+              {/* Format Switcher */}
+              <div className="hackathon-modal-tabs">
+                {(Object.keys(formatConfig) as HackathonFormat[]).map((format) => {
+                  const Icon = formatConfig[format].icon;
                   return (
                     <button
-                      key={type}
-                      onClick={() => setActiveType(type)}
-                      className={`webinar-modal-tab ${activeType === type ? "active" : ""}`}
-                      data-type={type}
+                      key={format}
+                      onClick={() => setActiveFormat(format)}
+                      className={`hackathon-modal-tab ${activeFormat === format ? "active" : ""}`}
                     >
                       <Icon className="h-4 w-4" />
-                      <span>{typeConfig[type].label}</span>
+                      <span>{formatConfig[format].label}</span>
                     </button>
                   );
                 })}
               </div>
 
               {/* Form Area */}
-              <div className="webinar-modal-form mt-8">
+              <div className="hackathon-modal-form mt-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Title */}
                   <div className="flex flex-col gap-2 md:col-span-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
                       <Layout className="h-3 w-3" />
-                      Webinar Title
+                      Hackathon Title
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g., Mastering Next.js Performance"
-                      className="webinar-modal-input"
+                      placeholder="e.g., Global AI Buildathon 2026"
+                      className="hackathon-modal-input"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     />
@@ -145,53 +138,68 @@ export default function WebinarModal({ isOpen, onClose, onSuccess }: WebinarModa
                       Description
                     </label>
                     <textarea
-                      placeholder="What should participants expect to learn?"
-                      className="webinar-modal-input min-h-[100px] resize-none py-3"
+                      placeholder="Describe the goals, rules, and tracks of the hackathon."
+                      className="hackathon-modal-input min-h-[100px] resize-none py-3"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
 
-                  {/* Meta 1 */}
+                  {/* Category */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
-                      <User className="h-3 w-3" />
-                      Speaker Name
+                      <Rocket className="h-3 w-3" />
+                      Category
                     </label>
                     <input
                       type="text"
-                      placeholder="Your Name"
-                      className="webinar-modal-input"
-                      value={formData.speakerName}
-                      onChange={(e) => setFormData({ ...formData, speakerName: e.target.value })}
+                      placeholder="e.g., AI/ML, Web3, FinTech"
+                      className="hackathon-modal-input"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     />
                   </div>
 
-                  {/* Meta 2 */}
+                  {/* Duration */}
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
-                      {activeType === "recorded" ? <Video className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
-                      {activeType === "recorded" ? "Video URL" : "Date & Time"}
+                      <Clock className="h-3 w-3" />
+                      Duration
                     </label>
                     <input
-                      type={activeType === "recorded" ? "text" : "datetime-local"}
-                      placeholder={activeType === "recorded" ? "YouTube/Vimeo link" : ""}
-                      className="webinar-modal-input"
-                      value={activeType === "recorded" ? formData.videoUrl : formData.dateTime}
-                      onChange={(e) => setFormData({ ...formData, [activeType === "recorded" ? "videoUrl" : "dateTime"]: e.target.value })}
+                      type="text"
+                      placeholder="e.g., 48 Hours, 1 Week"
+                      className="hackathon-modal-input"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Prize Pool */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
+                      <Trophy className="h-3 w-3" />
+                      Prize Pool
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $10,000"
+                      className="hackathon-modal-input"
+                      value={formData.prizePool}
+                      onChange={(e) => setFormData({ ...formData, prizePool: e.target.value })}
                     />
                   </div>
 
                   {/* Tags */}
-                  <div className="flex flex-col gap-2 md:col-span-2">
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-white/30 flex items-center gap-2">
                       <Tag className="h-3 w-3" />
                       Tags (comma separated)
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g., React, Performance, Scalability"
-                      className="webinar-modal-input"
+                      placeholder="e.g., React, Python, AWS"
+                      className="hackathon-modal-input"
                       value={formData.tags}
                       onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                     />
@@ -209,9 +217,9 @@ export default function WebinarModal({ isOpen, onClose, onSuccess }: WebinarModa
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className={`webinar-modal-submit ${activeType} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className={`hackathon-modal-submit ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    {loading ? "Processing..." : activeType === "recorded" ? "Add Webinar" : activeType === "scheduled" ? "Schedule Session" : "Start Hosting"}
+                    {loading ? "Creating..." : "Create Hackathon"}
                   </button>
                 </div>
               </div>
