@@ -18,10 +18,10 @@ import {
   Users,
   Rocket,
   Plus,
-  Cpu
+  Cpu,
+  ArrowLeft
 } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
-import HackathonModal from "@/components/hackathons/HackathonModal";
 import { useAuth } from "@backend/AuthProvider";
 import { getHackathons, registerForHackathon, checkIfRegisteredForHackathon } from "@backend/db.js";
 import "./hackathons.css";
@@ -40,6 +40,7 @@ interface Hackathon {
   accentColor?: string;
   glowColor?: string;
   gradientColors?: [string, string, string];
+  hackathonLink?: string;
 }
 
 const statusConfig: Record<
@@ -71,7 +72,6 @@ const formatColor: Record<Hackathon["format"], string> = {
 
 export default function HackathonsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
 
@@ -148,8 +148,9 @@ export default function HackathonsPage() {
           colors={(hackathon.gradientColors || theme.grad) as [string, string, string]}
           className="hackathon-card-glow h-full"
         >
-          <article className="hackathon-card" id={`hackathon-${hackathon.id}`}>
-            <div className="hackathon-card__header">
+          <article className="hackathon-card group cursor-pointer" id={`hackathon-${hackathon.id}`}>
+            <Link href={`/hackathons/${hackathon.id}`} className="absolute inset-0 z-10" />
+            <div className="hackathon-card__header relative z-0">
               <div className={`status-badge ${statusConfig[hackathon.status].badgeClass}`}>
                 <span className={`status-dot ${statusConfig[hackathon.status].dotClass}`} />
                 {statusConfig[hackathon.status].label}
@@ -202,14 +203,24 @@ export default function HackathonsPage() {
                     Prize: {hackathon.prizePool}
                  </div>
               </div>
-              <button
-                onClick={() => handleRegister(hackathon.id)}
-                disabled={registrations[hackathon.id]}
-                className={`hackathon-join-btn ${registrations[hackathon.id] ? "opacity-50 cursor-not-allowed" : ""}`}
-                style={{ "--btn-accent": hackathon.accentColor || theme.accent } as React.CSSProperties}
-              >
-                {registrations[hackathon.id] ? "Registered" : "Register Now"}
-              </button>
+              {registrations[hackathon.id] ? (
+                <Link 
+                  href={`/hackathons/${hackathon.id}`}
+                  className="hackathon-join-btn text-center flex items-center justify-center gap-2"
+                  style={{ "--btn-accent": hackathon.accentColor || theme.accent } as React.CSSProperties}
+                >
+                  <span>{hackathon.hackathonLink ? "Visit Website" : "View Details"}</span>
+                  {hackathon.hackathonLink ? <Globe className="h-3.5 w-3.5" /> : <ArrowLeft className="h-3.5 w-3.5 rotate-180" />}
+                </Link>
+              ) : (
+                <Link
+                  href={`/hackathons/${hackathon.id}`}
+                  className="hackathon-join-btn text-center"
+                  style={{ "--btn-accent": hackathon.accentColor || theme.accent } as React.CSSProperties}
+                >
+                  Register Now
+                </Link>
+              )}
             </div>
           </article>
         </BorderGlow>
@@ -232,14 +243,14 @@ export default function HackathonsPage() {
         </Link>
         <div className="flex items-center gap-4">
           {user && (
-            <button onClick={() => setIsModalOpen(true)} className="group">
+            <Link href="/hackathons/organize" className="group">
               <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
                 <span className="inline-flex items-center justify-center gap-2 px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
                   <Plus className="h-4 w-4" />
                   <span>Organize</span>
                 </span>
               </StarBorder>
-            </button>
+            </Link>
           )}
           {!user && !authLoading && (
             <Link href="/login" className="group">
@@ -303,13 +314,6 @@ export default function HackathonsPage() {
         )}
       </section>
 
-      <HackathonModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          getHackathons().then(data => setHackathons(data as Hackathon[]));
-        }}
-      />
     </StarfieldBackground>
   );
 }

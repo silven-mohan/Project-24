@@ -171,8 +171,12 @@ service cloud.firestore {
       allow write: if isAuth(); // Writes come from createPost in db.js
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // CHALLENGES
+    // ─────────────────────────────────────────────────────────────────────────────
     match /challenges/{challengeId} {
-      allow read, create: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
       allow update: if isAuth() && (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updated_at'])
       );
@@ -180,14 +184,15 @@ service cloud.firestore {
 
     match /challenge_participants/{participantId} {
       // participantId is {userId}_{challengeId}
-      allow read, create: if isAuth() && participantId.startsWith(request.auth.uid + "_");
+      allow read, create: if isOwner(participantId.split("_")[0]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // WEBINARS
     // ─────────────────────────────────────────────────────────────────────────────
     match /webinars/{webinarId} {
-      allow read, create: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
       allow update: if isAuth() && (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updated_at'])
       );
@@ -195,14 +200,15 @@ service cloud.firestore {
 
     match /webinar_registrations/{registrationId} {
       // registrationId is {userId}_{webinarId}
-      allow read, create: if isAuth() && registrationId.startsWith(request.auth.uid + "_");
+      allow read, create: if isOwner(registrationId.split("_")[0]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STUDY GROUPS
     // ─────────────────────────────────────────────────────────────────────────────
     match /study_groups/{groupId} {
-      allow read, create: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
       allow update: if isAuth() && (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'updated_at'])
       );
@@ -210,14 +216,15 @@ service cloud.firestore {
 
     match /study_group_members/{membershipId} {
       // membershipId is {userId}_{groupId}
-      allow read, create: if isAuth() && membershipId.startsWith(request.auth.uid + "_");
+      allow read, create: if isOwner(membershipId.split("_")[0]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // HACKATHONS
     // ─────────────────────────────────────────────────────────────────────────────
     match /hackathons/{hackathonId} {
-      allow read, create: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
       allow update: if isAuth() && (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updated_at'])
       );
@@ -225,7 +232,21 @@ service cloud.firestore {
 
     match /hackathon_registrations/{registrationId} {
       // registrationId is {userId}_{hackathonId}
-      allow read, create: if isAuth() && registrationId.startsWith(request.auth.uid + "_");
+      allow read, create: if isOwner(registrationId.split("_")[0]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // PUZZLES
+    // ─────────────────────────────────────────────────────────────────────────────
+    match /daily_puzzles/{puzzleId} {
+      allow read: if true;
+      allow write: if false; // Only backend (Admin SDK) should write
+    }
+
+    match /puzzle_completions/{completionId} {
+      // completionId is {userId}_{type}_{tag}
+      allow read: if isAuth() && isOwner(completionId.split("_")[0]);
+      allow write: if isAuth() && isOwner(request.resource.data.user_id);
     }
 
   }

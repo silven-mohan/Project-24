@@ -693,6 +693,25 @@
   }
 }
 
+/* ─── Lose Card Variations ─── */
+.win-card--lose {
+  border-color: rgba(244, 63, 94, 0.35);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(244, 63, 94, 0.15),
+    inset 0 0 30px rgba(244, 63, 94, 0.05);
+}
+
+.win-card--lose .win-card__title {
+  background: linear-gradient(to bottom, #fff 0%, #fda4af 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.win-card--lose .win-card__subtitle {
+  color: rgba(253, 164, 175, 0.5);
+}
+
 /* Celebration Particles */
 .celebration-particle {
   position: absolute;

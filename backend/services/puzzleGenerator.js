@@ -4,18 +4,22 @@ import { storePuzzle } from "./puzzleStorage.js";
 export const runDailyGeneration = async () => {
   console.log("Starting daily puzzle generation...");
 
+  // Sudoku
   try {
-    // Generate and store Sudoku
     const sudokuData = await generateSudoku();
     await storePuzzle("sudoku", sudokuData);
+    console.log("Sudoku daily puzzle updated.");
+  } catch (error) {
+    console.error("Failed to generate daily Sudoku:", error);
+  }
 
-    // Generate and store Minesweeper
+  // Minesweeper
+  try {
     const minesweeperData = await generateMinesweeper();
     await storePuzzle("minesweeper", minesweeperData);
-
-    console.log("Daily puzzle generation completed successfully.");
+    console.log("Minesweeper daily puzzle updated.");
   } catch (error) {
-    console.error("Failed to generate daily puzzles:", error);
+    console.error("Failed to generate daily Minesweeper:", error);
   }
 };
 

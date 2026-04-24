@@ -7,7 +7,6 @@ import BorderGlow from "@/components/effects/BorderGlow";
 import StarBorder from "@/components/effects/StarBorder";
 import { Video, Code2, Cpu, Sparkles, Clock, Calendar, Users, Plus } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
-import WebinarModal from "@/components/webinars/WebinarModal";
 import { useAuth } from "@backend/AuthProvider";
 import { getWebinars, registerForWebinar, checkIfRegisteredForWebinar } from "@backend/db.js";
 import "./webinars.css";
@@ -28,7 +27,6 @@ interface Webinar {
 
 export default function WebinarsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [webinars, setWebinars] = useState<Webinar[]>([]);
   const [registrations, setRegistrations] = useState<Record<string, boolean>>({});
 
@@ -83,7 +81,7 @@ export default function WebinarsPage() {
   };
 
   const webinarCards = webinars.map((webinar) => (
-    <div key={webinar.id} className="webinar-card-wrapper w-full">
+    <Link key={webinar.id} href={`/webinars/${webinar.id}`} className="webinar-card-wrapper w-full block outline-none group">
       <BorderGlow
         edgeSensitivity={28}
         glowColor={webinar.type === "recorded" ? "160 80 65" : webinar.type === "scheduled" ? "250 80 65" : "340 80 65"}
@@ -100,7 +98,7 @@ export default function WebinarsPage() {
             ? ["#6366f1", "#818cf8", "#4f46e5"]
             : ["#f43f5e", "#fb7185", "#e11d48"]
         }
-        className="webinar-card-glow h-full"
+        className="webinar-card-glow h-full cursor-pointer"
       >
         <article className="webinar-card">
           <div className="webinar-card__info">
@@ -108,63 +106,48 @@ export default function WebinarsPage() {
               <div className="webinar-card__icon" style={{ "--icon-accent": getColor(webinar.type) } as React.CSSProperties}>
                 {getIcon(webinar.type)}
               </div>
-              <span className={`webinar-${webinar.type}-badge`}>
-                {webinar.type.charAt(0).toUpperCase() + webinar.type.slice(1)}
+              <span className={`webinar-${webinar.type}-badge px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-white/5 border border-white/10`}>
+                {webinar.type}
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-white/95 leading-snug mb-3">
+            <h3 className="text-2xl font-bold text-white/95 leading-snug mb-2 group-hover:text-emerald-400 transition-colors">
               {webinar.title}
             </h3>
-            <p className="text-base text-white/55 leading-relaxed flex-1">
+            <p className="text-sm text-white/40 mb-3 flex items-center gap-1.5 italic">
+              with {webinar.speakerName}
+            </p>
+            <p className="text-base text-white/55 leading-relaxed flex-1 line-clamp-2">
               {webinar.description}
             </p>
-            <div className="webinar-meta">
-              <span className="webinar-meta__item">
-                <Calendar className="h-3.5 w-3.5" />
-                {webinar.dateTime || "N/A"}
-              </span>
-              <span className="webinar-meta__item">
-                <Users className="h-3.5 w-3.5" />
-                {webinar.participants} {webinar.type === "recorded" ? "views" : "registered"}
-              </span>
-            </div>
-            <div className="webinar-speaker">
-              <div className="webinar-speaker__avatar">
-                {webinar.speakerAvatar || (webinar.speakerName ? webinar.speakerName.charAt(0) : "?")}
-              </div>
-              <div className="webinar-speaker__info">
-                <span className="webinar-speaker__name">{webinar.speakerName}</span>
-                <span className="webinar-speaker__role">{webinar.speakerRole || "Expert"}</span>
-              </div>
-            </div>
+            
             <div className="flex flex-wrap gap-2 mt-6 mb-4">
-              {webinar.tags && webinar.tags.map(tag => (
-                <span key={tag} className="webinar-tag">{tag}</span>
+              {webinar.tags && webinar.tags.slice(0, 3).map(tag => (
+                <span key={tag} className="webinar-tag text-[10px] px-2 py-0.5 bg-white/5 border border-white/5 rounded text-white/30">#{tag}</span>
               ))}
             </div>
-            <div className="flex justify-end mt-auto">
-              {webinar.type === "recorded" ? (
-                <a href={webinar.videoUrl} target="_blank" rel="noopener noreferrer" className="webinar-btn m-0 border-sky-500/30 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20">
-                  Watch Recording
-                </a>
-              ) : webinar.type === "live" ? (
-                <button className="webinar-btn m-0 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20">
-                  Join Live
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleRegister(webinar.id)}
-                  disabled={registrations[webinar.id]}
-                  className={`webinar-btn m-0 ${registrations[webinar.id] ? "opacity-50 cursor-not-allowed" : "border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20"}`}
-                >
-                  {registrations[webinar.id] ? "Registered" : "Register Now"}
-                </button>
-              )}
+
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
+              <div className="flex items-center gap-4 text-xs text-white/40">
+                <div className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  {webinar.participants}
+                </div>
+                {webinar.dateTime && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {webinar.dateTime}
+                  </div>
+                )}
+              </div>
+              <span className="text-sm font-bold text-white/60 group-hover:text-white transition-colors flex items-center gap-1">
+                View Details
+                <Sparkles className="h-3 w-3" />
+              </span>
             </div>
           </div>
         </article>
       </BorderGlow>
-    </div>
+    </Link>
   ));
 
   return (
@@ -191,8 +174,8 @@ export default function WebinarsPage() {
         </Link>
         <div className="flex items-center gap-4">
           {user && (
-            <button
-              onClick={() => setIsModalOpen(true)}
+            <Link
+              href="/webinars/host"
               className="group"
             >
               <StarBorder as="span" color="indigo" speed="5s" thickness={1}>
@@ -201,7 +184,7 @@ export default function WebinarsPage() {
                   <span>Host/Schedule</span>
                 </span>
               </StarBorder>
-            </button>
+            </Link>
           )}
           {!user && !authLoading && (
             <Link href="/login" className="group">
@@ -243,14 +226,6 @@ export default function WebinarsPage() {
         )}
       </section>
 
-      <WebinarModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          // Refresh list
-          getWebinars().then(data => setWebinars(data as Webinar[]));
-        }}
-      />
     </StarfieldBackground>
   );
 }

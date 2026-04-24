@@ -342,6 +342,8 @@
   padding: 32px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(90vh - 2px);
 }
 
 .hackathon-modal-header {

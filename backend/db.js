@@ -235,9 +235,7 @@ export const searchUsersByPrefix = async (prefix, pageSize = 10) => {
 export const createPost = async (userId, postData) => {
   const { caption = "", media = [], hashtags = [] } = postData;
 
-  const normalizedHashtags = hashtags.map((t) =>
-    t.startsWith("#") ? t.slice(1).toLowerCase() : t.toLowerCase()
-  );
+  const normalizedHashtags = normalizeHashtags(hashtags);
 
   const auth = getAuth();
   const currentUid = auth.currentUser ? auth.currentUser.uid : userId;
@@ -836,28 +834,14 @@ export const getChallenges = async () => {
  * @param {string} userId
  */
 export const joinChallenge = async (challengeId, userId) => {
-  const participantId = `${userId}_${challengeId}`;
-  const participantRef = doc(db, "challenge_participants", participantId);
-  const challengeRef = doc(db, "challenges", challengeId);
-
-  return await runTransaction(db, async (transaction) => {
-    const participantSnap = await transaction.get(participantRef);
-    if (participantSnap.exists()) {
-      throw new Error("Already joined this challenge.");
-    }
-
-    transaction.set(participantRef, {
-      user_id: userId,
-      challenge_id: challengeId,
-      joined_at: serverTimestamp(),
-    });
-
-    transaction.update(challengeRef, {
-      participants: increment(1),
-      updated_at: serverTimestamp(),
-    });
-
-    return true;
+  return await handleEventRegistration({
+    collectionName: "challenge_participants",
+    eventId: challengeId,
+    userId,
+    countField: "participants",
+    errorMessage: "Already joined this challenge.",
+    idField: "challenge_id",
+    targetCollection: "challenges"
   });
 };
 
@@ -919,26 +903,12 @@ export const getWebinarById = async (webinarId) => {
  * Registers a user for a webinar.
  */
 export const registerForWebinar = async (webinarId, userId) => {
-  const registrationId = `${userId}_${webinarId}`;
-  const registrationRef = doc(db, "webinar_registrations", registrationId);
-  const webinarRef = doc(db, "webinars", webinarId);
-
-  return await runTransaction(db, async (transaction) => {
-    const snap = await transaction.get(registrationRef);
-    if (snap.exists()) throw new Error("Already registered for this webinar.");
-
-    transaction.set(registrationRef, {
-      user_id: userId,
-      webinar_id: webinarId,
-      registered_at: serverTimestamp(),
-    });
-
-    transaction.update(webinarRef, {
-      participants: increment(1),
-      updated_at: serverTimestamp(),
-    });
-
-    return true;
+  return await handleEventRegistration({
+    collectionName: "webinar_registrations",
+    eventId: webinarId,
+    userId,
+    errorMessage: "Already registered for this webinar.",
+    idField: "webinar_id"
   });
 };
 
@@ -989,26 +959,13 @@ export const getStudyGroupById = async (groupId) => {
  * Joins a study group.
  */
 export const joinStudyGroup = async (groupId, userId) => {
-  const membershipId = `${userId}_${groupId}`;
-  const membershipRef = doc(db, "study_group_members", membershipId);
-  const groupRef = doc(db, "study_groups", groupId);
-
-  return await runTransaction(db, async (transaction) => {
-    const snap = await transaction.get(membershipRef);
-    if (snap.exists()) throw new Error("Already a member of this group.");
-
-    transaction.set(membershipRef, {
-      user_id: userId,
-      group_id: groupId,
-      joined_at: serverTimestamp(),
-    });
-
-    transaction.update(groupRef, {
-      members: increment(1),
-      updated_at: serverTimestamp(),
-    });
-
-    return true;
+  return await handleEventRegistration({
+    collectionName: "study_group_members",
+    eventId: groupId,
+    userId,
+    countField: "members",
+    errorMessage: "Already a member of this group.",
+    idField: "group_id"
   });
 };
 
@@ -1059,26 +1016,12 @@ export const getHackathonById = async (hackathonId) => {
  * Registers a user for a hackathon.
  */
 export const registerForHackathon = async (hackathonId, userId) => {
-  const registrationId = `${userId}_${hackathonId}`;
-  const registrationRef = doc(db, "hackathon_registrations", registrationId);
-  const hackathonRef = doc(db, "hackathons", hackathonId);
-
-  return await runTransaction(db, async (transaction) => {
-    const snap = await transaction.get(registrationRef);
-    if (snap.exists()) throw new Error("Already registered for this hackathon.");
-
-    transaction.set(registrationRef, {
-      user_id: userId,
-      hackathon_id: hackathonId,
-      registered_at: serverTimestamp(),
-    });
-
-    transaction.update(hackathonRef, {
-      participants: increment(1),
-      updated_at: serverTimestamp(),
-    });
-
-    return true;
+  return await handleEventRegistration({
+    collectionName: "hackathon_registrations",
+    eventId: hackathonId,
+    userId,
+    errorMessage: "Already registered for this hackathon.",
+    idField: "hackathon_id"
   });
 };
 
@@ -1255,14 +1198,56 @@ export const getActivityLog = async (userId, pageSize = 20, cursor = null) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LEGACY COMPAT SHIM — Remove after all consumers are updated
+// UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** @deprecated Use toggleLike instead */
-export const likePost = toggleLike;
+/**
+ * Normalizes a list of hashtags to lowercase and removes the leading # if present.
+ * @param {string[]} hashtags 
+ */
+export const normalizeHashtags = (hashtags = []) => {
+  return hashtags.map((t) =>
+    t.startsWith("#") ? t.slice(1).toLowerCase() : t.toLowerCase()
+  );
+};
 
-/** @deprecated Use getUserById or getUserByIdentifier */
-export const syncUserWithFirestore = handleIdentitySynthesis;
+/**
+ * Generic event registration logic with transaction safety.
+ * Handles duplicate prevention and atomic count increments.
+ */
+const handleEventRegistration = async (params) => {
+  const { 
+    collectionName, 
+    eventId, 
+    userId, 
+    countField = "participants", 
+    errorMessage = "Already registered.",
+    idField = "event_id",
+    targetCollection = null
+  } = params;
+
+  const registrationId = `${userId}_${eventId}`;
+  const registrationRef = doc(db, collectionName, registrationId);
+  const eventRef = doc(db, targetCollection || collectionName.replace("_registrations", "s").replace("_members", ""), eventId);
+
+  return await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(registrationRef);
+    if (snap.exists()) throw new Error(errorMessage);
+
+    transaction.set(registrationRef, {
+      user_id: userId,
+      [idField]: eventId,
+      registered_at: serverTimestamp(),
+    });
+
+    transaction.update(eventRef, {
+      [countField]: increment(1),
+      updated_at: serverTimestamp(),
+    });
+
+    return true;
+  });
+};
 
 /**
  * Terminate the current session.
@@ -1283,7 +1268,7 @@ export const signOutUser = async () => {
  * @param {string} type - "sudoku" | "minesweeper"
  * @param {Object} stats - { duration, hintsUsed }
  */
-export const logPuzzleSolve = async (userId, puzzleTag, type, stats) => {
+export const logPuzzleSolve = async (userId, puzzleTag, type, stats, status = "win") => {
   const completionId = `${userId}_${type}_${puzzleTag.replace("#", "")}`;
   const completionRef = doc(db, "puzzle_completions", completionId);
 
@@ -1292,6 +1277,7 @@ export const logPuzzleSolve = async (userId, puzzleTag, type, stats) => {
     puzzle_tag: puzzleTag,
     puzzle_type: type,
     stats,
+    status,
     completed_at: serverTimestamp(),
   });
 };
@@ -1314,13 +1300,15 @@ export const checkPuzzleSolved = async (userId, puzzleTag, type) => {
  * @param {string} type
  */
 export const getDailyPuzzle = async (type) => {
+  // To avoid requiring a composite index on (type, created_at), we query for 
+  // all puzzles and filter/sort in memory. Since we only have 1-2 puzzles per day,
+  // this is perfectly efficient even with years of data.
   const q = query(
     collection(db, "daily_puzzles"),
-    where("type", "==", type),
     orderBy("created_at", "desc"),
-    limit(1)
+    limit(50) // More than enough to find the latest of a specific type
   );
   const snap = await getDocs(q);
-  if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+  const puzzles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return puzzles.find(p => p.type === type) || null;
 };

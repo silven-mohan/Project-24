@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
 import BorderGlow from "@/components/effects/BorderGlow";
 import StarBorder from "@/components/effects/StarBorder";
 import { Users, BookOpen, Code, Database, Globe, Clock, User, Plus } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
-import StudyGroupModal from "@/components/study-groups/StudyGroupModal";
 import { useAuth } from "@backend/AuthProvider";
 import { getStudyGroups, joinStudyGroup, checkIfInStudyGroup } from "@backend/db.js";
 import "./study-groups.css";
@@ -27,7 +27,7 @@ interface StudyGroup {
 
 export default function StudyGroupsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
   const [studyGroups, setStudyGroups] = useState<StudyGroup[]>([]);
   const [memberships, setMemberships] = useState<Record<string, boolean>>({});
 
@@ -60,6 +60,7 @@ export default function StudyGroupsPage() {
       await joinStudyGroup(groupId, user.uid);
       setMemberships(prev => ({ ...prev, [groupId]: true }));
       setStudyGroups(prev => prev.map(g => g.id === groupId ? { ...g, members: g.members + 1 } : g));
+      router.push(`/study-groups/${groupId}`);
     } catch (err) {
       console.error("Failed to join study group:", err);
     }
@@ -119,13 +120,21 @@ export default function StudyGroupsPage() {
               ))}
             </div>
             <div className="flex justify-end mt-auto">
-              <button
-                onClick={() => handleJoin(group.id)}
-                disabled={memberships[group.id] || group.members >= group.capacity}
-                className={`study-group-btn m-0 ${memberships[group.id] ? "opacity-50 cursor-not-allowed" : "border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"}`}
-              >
-                {memberships[group.id] ? "Joined" : group.members >= group.capacity ? "Full" : "Join"}
-              </button>
+              {memberships[group.id] ? (
+                <Link href={`/study-groups/${group.id}`} className="w-full">
+                  <button className="study-group-btn m-0 w-full border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20">
+                    Enter Group
+                  </button>
+                </Link>
+              ) : (
+                <button
+                  onClick={() => handleJoin(group.id)}
+                  disabled={group.members >= group.capacity}
+                  className={`study-group-btn m-0 ${group.members >= group.capacity ? "opacity-50 cursor-not-allowed" : "border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"}`}
+                >
+                  {group.members >= group.capacity ? "Full" : "Join"}
+                </button>
+              )}
             </div>
           </div>
         </article>
@@ -157,8 +166,8 @@ export default function StudyGroupsPage() {
         </Link>
         <div className="flex items-center gap-4">
           {user && (
-            <button
-              onClick={() => setIsModalOpen(true)}
+            <Link
+              href="/study-groups/create"
               className="group"
             >
               <StarBorder as="span" color="purple" speed="5s" thickness={1}>
@@ -167,7 +176,7 @@ export default function StudyGroupsPage() {
                   <span>Create Group</span>
                 </span>
               </StarBorder>
-            </button>
+            </Link>
           )}
           {!user && !authLoading && (
             <Link href="/login" className="group">
@@ -209,14 +218,6 @@ export default function StudyGroupsPage() {
         )}
       </section>
 
-      <StudyGroupModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          // Refresh list
-          getStudyGroups().then(data => setStudyGroups(data as StudyGroup[]));
-        }}
-      />
     </StarfieldBackground>
   );
 }

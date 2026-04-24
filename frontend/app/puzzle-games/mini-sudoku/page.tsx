@@ -17,7 +17,8 @@ const formatTime = (seconds: number) => {
   return `${m}:${s}`;
 };
 
-const initialSudokuBoard = [
+// Static fallbacks in case AI fails
+const fallbackSudokuBoard = [
   ['5','3','0','0','7','0','0','0','0'],
   ['6','0','0','1','9','5','0','0','0'],
   ['0','9','8','0','0','0','0','6','0'],
@@ -28,7 +29,7 @@ const initialSudokuBoard = [
   ['0','0','0','4','1','9','0','0','5'],
   ['0','0','0','0','8','0','0','7','9']
 ];
-const solutionSudokuBoard = [
+const fallbackSolutionBoard = [
   ['5','3','4','6','7','8','9','1','2'],
   ['6','7','2','1','9','5','3','4','8'],
   ['1','9','8','3','4','2','5','6','7'],
@@ -44,9 +45,9 @@ export default function MiniSudokuPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [board, setBoard] = useState<string[][]>(initialSudokuBoard.map(r => [...r]));
-  const [initialBoard, setInitialBoard] = useState<string[][]>(initialSudokuBoard.map(r => [...r]));
-  const [solutionBoard, setSolutionBoard] = useState<string[][]>(solutionSudokuBoard.map(r => [...r]));
+  const [board, setBoard] = useState<string[][]>(fallbackSudokuBoard.map(r => [...r]));
+  const [initialBoard, setInitialBoard] = useState<string[][]>(fallbackSudokuBoard.map(r => [...r]));
+  const [solutionBoard, setSolutionBoard] = useState<string[][]>(fallbackSolutionBoard.map(r => [...r]));
   const [puzzleTag, setPuzzleTag] = useState<string>("#0");
   
   const [history, setHistory] = useState<string[][][]>([]);
@@ -57,45 +58,82 @@ export default function MiniSudokuPage() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [gameLoading, setGameLoading] = useState(true);
 
-  // Fetch daily puzzle and check solved status
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      setGameLoading(false);
-      return;
-    }
-
+    let isCanceled = false;
     const initGame = async () => {
+      if (!user) {
+        if (!isCanceled) setGameLoading(false);
+        return;
+      }
+
+      let currentTag = "#0";
       try {
         const daily = await getDailyPuzzle("sudoku") as any;
+        if (isCanceled) return;
+        
         if (daily) {
-          const solvedData = await checkPuzzleSolved(user.uid, daily.tag, "sudoku");
+          currentTag = daily.tag;
+          setPuzzleTag(currentTag);
+          const solvedData = await checkPuzzleSolved(user.uid, currentTag, "sudoku");
+          if (isCanceled) return;
           
           if (solvedData) {
-            // Already solved: Load win state
-            setWin(true);
             setIsAlreadySolved(true);
             setTimePassed(solvedData.stats.duration);
             setHintsUsed(solvedData.stats.hintsUsed);
-            
-            // Set board to solution so it looks finished
             setBoard(daily.data.solution.map((r: any) => [...r]));
-          } else {
-            setBoard(daily.data.initial.map((r: any) => [...r]));
+            setInitialBoard(daily.data.initial);
+            setSolutionBoard(daily.data.solution);
+            setTimeout(() => {
+              if (!isCanceled) setWin(true);
+            }, 2000);
+            return;
           }
 
+          setBoard(daily.data.initial.map((r: any) => [...r]));
           setInitialBoard(daily.data.initial);
           setSolutionBoard(daily.data.solution);
-          setPuzzleTag(daily.tag);
+        } else {
+          const date = new Date();
+          currentTag = `#fallback-sudoku-${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
+          setPuzzleTag(currentTag);
+          const solvedData = await checkPuzzleSolved(user.uid, currentTag, "sudoku");
+          if (isCanceled) return;
+          if (solvedData) {
+            setIsAlreadySolved(true);
+            setTimePassed(solvedData.stats.duration);
+            setHintsUsed(solvedData.stats.hintsUsed);
+            setBoard(fallbackSolutionBoard.map(r => [...r]));
+            setTimeout(() => {
+              if (!isCanceled) setWin(true);
+            }, 2000);
+          }
         }
       } catch (err) {
         console.error("Failed to load daily puzzle:", err);
+        const date = new Date();
+        currentTag = `#fallback-sudoku-${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
+        setPuzzleTag(currentTag);
+        const solvedData = await checkPuzzleSolved(user.uid, currentTag, "sudoku");
+        if (isCanceled) return;
+        if (solvedData) {
+          setIsAlreadySolved(true);
+          setTimePassed(solvedData.stats.duration);
+          setHintsUsed(solvedData.stats.hintsUsed);
+          setBoard(fallbackSolutionBoard.map(r => [...r]));
+          setTimeout(() => {
+            if (!isCanceled) setWin(true);
+          }, 2000);
+        }
       } finally {
-        setGameLoading(false);
+        if (!isCanceled) setGameLoading(false);
       }
     };
 
     initGame();
+    return () => {
+      isCanceled = true;
+    };
   }, [user, authLoading]);
 
   useEffect(() => {
@@ -107,11 +145,6 @@ export default function MiniSudokuPage() {
     }
     return () => clearInterval(interval);
   }, [win, gameLoading, user]);
-
-  useEffect(() => {
-    (window as any).solveSudoku = () => setWin(true);
-    return () => { delete (window as any).solveSudoku; };
-  }, []);
 
   const handleChange = (r: number, c: number, v: string) => {
     if (initialBoard[r][c] !== '0' || win) return;

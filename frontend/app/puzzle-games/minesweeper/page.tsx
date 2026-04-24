@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import StarfieldBackground from "@/components/background/StarfieldBackground";
-import { Library, RefreshCcw, Lightbulb, Trophy, Clock, Sparkles, Lock } from "lucide-react";
+import { Library, RefreshCcw, Lightbulb, Trophy, Clock, Sparkles, Lock, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import "../puzzle-games.css";
 import GlareHover from "@/components/ui/GlareHover";
@@ -54,45 +54,102 @@ export default function MinesweeperPage() {
       return;
     }
 
+    let isCanceled = false;
     const loadGame = async () => {
+      let currentTag = "#0";
       try {
         const daily = await getDailyPuzzle("minesweeper") as any;
+        if (isCanceled) return;
+
         if (daily) {
-          setPuzzleTag(daily.tag);
-          const solvedData = await checkPuzzleSolved(user.uid, daily.tag, "minesweeper");
+          currentTag = daily.tag;
+          setPuzzleTag(currentTag);
+          const solvedData = await checkPuzzleSolved(user.uid, currentTag, "minesweeper");
+          if (isCanceled) return;
           
           if (solvedData) {
-            setWin(true);
             setIsAlreadySolved(true);
             setTimePassed(solvedData.stats.duration);
             setHintsUsed(solvedData.stats.hintsUsed);
-            // We'll reveal the whole map if already solved
             if (daily.data.mineMap) {
               revealSolvedMap(daily.data.mineMap);
             }
-          } else if (daily.data.mineMap) {
+            if (solvedData.status === "lose") {
+              setGameOver(true);
+              setTimeout(() => {
+                if (!isCanceled) setGameOver(true);
+              }, 2000);
+            } else {
+              setTimeout(() => {
+                if (!isCanceled) setWin(true);
+              }, 2000);
+            }
+            return;
+          } 
+          
+          if (daily.data.mineMap) {
             generateFromMap(daily.data.mineMap);
           } else {
             initGrid();
           }
         } else {
-          initGrid();
+          const date = new Date();
+          currentTag = `#fallback-${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
+          setPuzzleTag(currentTag);
+          const solvedData = await checkPuzzleSolved(user.uid, currentTag, "minesweeper");
+          if (isCanceled) return;
+          if (solvedData) {
+            setIsAlreadySolved(true);
+            setTimePassed(solvedData.stats.duration);
+            setHintsUsed(solvedData.stats.hintsUsed);
+            initGrid();
+            revealSolvedMapFromCurrent(); 
+            if (solvedData.status === "lose") {
+              setGameOver(true);
+            } else {
+              setTimeout(() => {
+                if (!isCanceled) setWin(true);
+              }, 2000);
+            }
+          } else {
+            initGrid();
+          }
         }
       } catch (err) {
-        console.error("Failed to load daily Minesweeper:", err);
+        console.error("[Neural Link] Critical failure fetching daily Booksweeper map:", err);
+        const date = new Date();
+        currentTag = `#fallback-${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`;
+        setPuzzleTag(currentTag);
+        const solvedData = await checkPuzzleSolved(user.uid, currentTag, "minesweeper");
+        if (isCanceled) return;
+        if (solvedData) {
+           setIsAlreadySolved(true);
+           setTimePassed(solvedData.stats.duration);
+           setHintsUsed(solvedData.stats.hintsUsed);
+           if (solvedData.status === "lose") {
+             setGameOver(true);
+           } else {
+             setTimeout(() => {
+                if (!isCanceled) setWin(true);
+             }, 2000);
+           }
+        }
         initGrid();
       } finally {
-        setGameLoading(false);
+        if (!isCanceled) setGameLoading(false);
       }
     };
 
     loadGame();
+    return () => {
+      isCanceled = true;
+    };
   }, [user, authLoading]);
 
   const generateFromMap = (mineMap: boolean[][]) => {
     let newGrid: CellData[][] = Array(MS_ROWS).fill(null).map((_, r) => 
       Array(MS_COLS).fill(null).map((_, c) => ({
-        isMine: mineMap[r][c],
+        isMine: (mineMap && mineMap[r] && mineMap[r][c]) ? true : false,
         isRevealed: false,
         isFlagged: false,
         neighborMines: 0
@@ -119,14 +176,18 @@ export default function MinesweeperPage() {
     }
     setGrid(newGrid);
     setGameOver(false);
-    // Don't reset win here as it might have been set by loadGame
     setFlags(MS_MINES);
+  };
+
+  const revealSolvedMapFromCurrent = () => {
+    setGrid(prev => prev.map(row => row.map(cell => ({ ...cell, isRevealed: true }))));
+    setFlags(0);
   };
 
   const revealSolvedMap = (mineMap: boolean[][]) => {
     let newGrid: CellData[][] = Array(MS_ROWS).fill(null).map((_, r) => 
       Array(MS_COLS).fill(null).map((_, c) => ({
-        isMine: mineMap[r][c],
+        isMine: (mineMap && mineMap[r] && mineMap[r][c]) ? true : false,
         isRevealed: true, // Reveal everything
         isFlagged: false,
         neighborMines: 0
@@ -158,7 +219,6 @@ export default function MinesweeperPage() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    // Don't start timer until grid is generated
     if (grid.length > 0 && !gameOver && !win) {
       interval = setInterval(() => {
         setTimePassed(t => t + 1);
@@ -167,12 +227,18 @@ export default function MinesweeperPage() {
     return () => clearInterval(interval);
   }, [grid.length, gameOver, win]);
 
-  useEffect(() => {
-    (window as any).solveMinesweeper = () => setWin(true);
-    return () => { delete (window as any).solveMinesweeper; };
-  }, []);
-
   const initGrid = () => {
+    // Make initGrid deterministic based on date if we're in "Daily" mode
+    // This ensures that even if the backend fails or Firestore index is missing,
+    // all users still see the same "Single" board for the day.
+    const date = new Date();
+    const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+    let currentSeed = seed;
+    const deterministicRandom = () => {
+      currentSeed = (currentSeed * 1664525 + 1013904223) % 4294967296;
+      return currentSeed / 4294967296;
+    };
+
     let newGrid: CellData[][] = Array(MS_ROWS).fill(null).map(() => 
       Array(MS_COLS).fill(null).map(() => ({
         isMine: false,
@@ -183,8 +249,8 @@ export default function MinesweeperPage() {
     );
     let placed = 0;
     while(placed < MS_MINES) {
-      let r = Math.floor(Math.random() * MS_ROWS);
-      let c = Math.floor(Math.random() * MS_COLS);
+      let r = Math.floor(deterministicRandom() * MS_ROWS);
+      let c = Math.floor(deterministicRandom() * MS_COLS);
       if(!newGrid[r][c].isMine) {
         newGrid[r][c].isMine = true;
         placed++;
@@ -228,6 +294,12 @@ export default function MinesweeperPage() {
       }
       setGrid(newGrid);
       setGameOver(true);
+      if (user) {
+        logPuzzleSolve(user.uid, puzzleTag, "minesweeper", {
+          duration: timePassed,
+          hintsUsed: hintsUsed
+        }, "lose");
+      }
       return;
     }
 
@@ -285,8 +357,6 @@ export default function MinesweeperPage() {
   const handleHint = () => {
     if (gameOver || win || hintCooldown) return;
     
-    // Find a safe cell that isn't revealed yet, or unflagged mine to flag. 
-    // Usually hints just reveal one safe square for you, or safely flag an obvious mine.
     let safeCells: {r:number, c:number}[] = [];
     for (let i = 0; i < MS_ROWS; i++) {
       for (let j = 0; j < MS_COLS; j++) {
@@ -301,12 +371,10 @@ export default function MinesweeperPage() {
       setHintsUsed(prev => prev + 1);
       setTimeout(() => setHintCooldown(false), 5000);
       let newGrid = grid.map(row => row.map(cell => ({ ...cell })));
-      // Prefer zero neighbor cells if possible for a better hint spread
       const zeroCells = safeCells.filter(cell => newGrid[cell.r][cell.c].neighborMines === 0);
       const targetList = zeroCells.length > 0 ? zeroCells : safeCells;
       const target = targetList[Math.floor(Math.random() * targetList.length)];
       
-      // Auto-reveal it safely by directly replacing internal call
       const floodFill = (row: number, col: number) => {
         if (row < 0 || row >= MS_ROWS || col < 0 || col >= MS_COLS) return;
         if (newGrid[row][col].isRevealed || newGrid[row][col].isFlagged) return;
@@ -326,7 +394,6 @@ export default function MinesweeperPage() {
       floodFill(target.r, target.c);
       setGrid(newGrid);
       
-      // check win
       let revealed = 0;
       for (let i = 0; i < MS_ROWS; i++) {
         for (let j = 0; j < MS_COLS; j++) {
@@ -470,7 +537,6 @@ export default function MinesweeperPage() {
                 transition={{ type: "spring", damping: 20, stiffness: 100 }}
                 className="win-card"
               >
-              {/* Particles */}
               {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={i}
@@ -513,6 +579,55 @@ export default function MinesweeperPage() {
                   <Lightbulb className="win-stat__icon" size={24} />
                   <span className="win-stat__label">Hints</span>
                   <span className="win-stat__value">{hintsUsed}</span>
+                </div>
+              </div>
+
+              <div className="win-card__actions">
+                <Link href="/puzzle-games" className="win-card__btn win-card__btn--primary">
+                  BACK TO ARENA
+                </Link>
+              </div>
+            </motion.div>
+            </GlareHover>
+          </div>
+        )}
+
+        {gameOver && (
+          <div className="win-overlay px-4">
+            <GlareHover
+              glareColor="#f43f5e"
+              glareOpacity={0.4}
+              glareAngle={-30}
+              glareSize={300}
+              borderRadius="32px"
+              className="w-full max-w-[540px]"
+            >
+              <motion.div 
+                initial={{ y: 100, opacity: 0, scale: 0.9 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", damping: 20, stiffness: 100 }}
+                className="win-card win-card--lose"
+              >
+              <div className="win-card__trophy text-rose-500">
+                <Library size={80} className="opacity-50 blur-xs absolute" />
+                <Plus size={40} className="absolute rotate-45 text-rose-500 translate-x-8 -translate-y-8" />
+                <Library size={80} className="relative z-10" />
+              </div>
+
+              <h2 className="win-card__title text-rose-400">Silence Broken!</h2>
+              <p className="win-card__subtitle">"The stack collapsed. A cacophony of knowledge fills the room. The librarian's glare is cold."</p>
+              
+              <div className="win-card__stats bg-rose-500/5 border-rose-500/10">
+                <div className="win-stat">
+                  <Clock className="win-stat__icon text-rose-400" size={24} />
+                  <span className="win-stat__label">Survived</span>
+                  <span className="win-stat__value">{formatTime(timePassed)}</span>
+                </div>
+                <div className="win-stat">
+                  <RefreshCcw className="win-stat__icon text-rose-400" size={24} />
+                  <span className="win-stat__label">Attempt</span>
+                  <span className="win-stat__value">{hintsUsed > 0 ? "Guided" : "Pure"}</span>
                 </div>
               </div>
 

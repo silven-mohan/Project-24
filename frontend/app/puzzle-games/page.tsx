@@ -7,9 +7,11 @@ import BorderGlow from "@/components/effects/BorderGlow";
 import StarBorder from "@/components/effects/StarBorder";
 import { Puzzle, Grid3x3, Library } from "lucide-react";
 import AnimatedList from "@/components/ui/AnimatedList";
+import { useAuth } from "@backend/AuthProvider";
 import "./puzzle-games.css";
 
 export default function PuzzleGamesPage() {
+  const { user } = useAuth();
   const puzzleCards = [
     (
       <div className="puzzle-card-wrapper w-full">
@@ -115,13 +117,15 @@ export default function PuzzleGamesPage() {
           </svg>
           Back to Home
         </Link>
-        <Link href="/login" className="group">
-          <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
-            <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
-              Sign In
-            </span>
-          </StarBorder>
-        </Link>
+        {!user && (
+          <Link href="/login" className="group">
+            <StarBorder as="span" color="cyan" speed="5s" thickness={1}>
+              <span className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-cyan-100 transition-colors duration-200 group-hover:text-white">
+                Sign In
+              </span>
+            </StarBorder>
+          </Link>
+        )}
       </nav>
 
       {/* Hero */}
