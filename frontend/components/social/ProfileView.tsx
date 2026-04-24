@@ -8,7 +8,7 @@ import { KineticCard, KineticPage } from "@/components/effects/KineticTransition
 import { 
   Users, Info, MessageSquare, Heart, Share2, ArrowLeft, ArrowRight,
   Settings, PlusCircle, UserCircle, Shield, Activity, LogOut,
-  X, Trash2, Send, UserMinus, UserCheck, Search
+  X, Trash2, UserMinus, UserCheck, Search
 } from "lucide-react";
 import { useAuth } from "@backend/AuthProvider";
 import { 
@@ -264,10 +264,6 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
               <Search size={20} />
             </button>
             
-            <Link href="/profile/messaging" className="settings-btn">
-              <Send size={20} />
-            </Link>
-
             {currentUserData?.id && <NotificationBell userId={currentUserData.id} />}
             
             {isSelf && (
@@ -328,9 +324,6 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
                   {relStatus === 'friends' ? <><UserCheck size={18} /> Friends</> : 
                    relStatus === 'following' ? <><UserMinus size={18} /> Unfollow</> : 
                    <><PlusCircle size={18} /> Add Friend</>}
-                </button>
-                <button className="settings-btn h-10 w-10">
-                  <MessageSquare size={18} />
                 </button>
               </div>
             )}
