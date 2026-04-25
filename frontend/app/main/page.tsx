@@ -203,7 +203,7 @@ export default function MainPage() {
 
       <KineticPage pageKey="main" className="relative z-10 flex min-h-screen w-full flex-col px-4 py-4 page-offset">
         {/* Hero Section */}
-        <section className="flex min-h-[100vh] w-full flex-col items-center justify-center relative px-4 md:px-0">
+        <section className="flex min-h-screen w-full flex-col items-center justify-center relative px-4 md:px-0">
           <h1 className="text-center select-none hero-heading-glow font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent uppercase" style={{ fontSize: "var(--font-size-hero)" }}>
             PROJECT 24
           </h1>
