@@ -203,19 +203,13 @@ export default function MainPage() {
 
       <KineticPage pageKey="main" className="relative z-10 flex min-h-screen w-full flex-col px-4 py-4 page-offset">
         {/* Hero Section */}
-        <section className="flex min-h-[90vh] w-full flex-col items-center justify-center relative">
-          <KineticCard index={2}>
-            <h1 className="text-7xl md:text-9xl font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent hero-heading-glow uppercase text-center select-none">
-              Project 24
+        <section className="flex min-h-[80vh] w-full flex-col items-center justify-center relative px-4 md:px-0">
+          <KineticCard className="w-full max-w-4xl h-[320px] md:h-[600px] bg-[#0a0e1a]/40 border border-white/10 rounded-[32px] overflow-hidden flex items-center justify-center relative">
+            <h1 className="text-center select-none hero-heading-glow text-5xl md:text-8xl font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent uppercase">
+              PROJECT 24
             </h1>
           </KineticCard>
           
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20 animate-bounce-subtle">
-            <span className="text-[10px] uppercase tracking-[0.3em] font-bold">Scroll to Explore</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 13l5 5 5-5M7 6l5 5 5-5" />
-            </svg>
-          </div>
         </section>
 
         {/* Content Section */}
