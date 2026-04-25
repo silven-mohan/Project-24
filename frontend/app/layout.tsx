@@ -16,9 +16,66 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://project-24.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Project-24",
-  description: "Peer-to-peer learning platform",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Project 24 — Peer-to-Peer Learning Platform",
+    template: "%s | Project 24",
+  },
+  description:
+    "Join Project 24, a learner-first engineering ecosystem. Collaborate in hackathons, solve coding challenges, attend webinars, and grow with peer-led study groups.",
+  keywords: [
+    "peer learning",
+    "coding challenges",
+    "hackathons",
+    "study groups",
+    "webinars",
+    "collaborative learning",
+    "engineering community",
+    "project 24",
+  ],
+  authors: [{ name: "Project 24 Team" }],
+  creator: "Project 24",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SITE_URL,
+    siteName: "Project 24",
+    title: "Project 24 — Peer-to-Peer Learning Platform",
+    description:
+      "A learner-first engineering ecosystem. Hackathons, challenges, webinars, and study groups — all in one place.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Project 24 — Peer-to-Peer Learning Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Project 24 — Peer-to-Peer Learning Platform",
+    description:
+      "A learner-first engineering ecosystem. Hackathons, challenges, webinars, and study groups.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +88,34 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full w-full antialiased`}
     >
+      <head>
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "Project 24",
+              url: SITE_URL,
+              description:
+                "A learner-first engineering ecosystem. Collaborate in hackathons, solve coding challenges, attend webinars, and grow with peer-led study groups.",
+              applicationCategory: "EducationalApplication",
+              operatingSystem: "Web",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+              author: {
+                "@type": "Organization",
+                name: "Project 24",
+                url: SITE_URL,
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="min-h-full w-full bg-[#06070f] text-white overflow-x-hidden m-0 p-0">
         <KineticProviders>
           <AppFrame>{children}</AppFrame>
