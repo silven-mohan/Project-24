@@ -34,16 +34,6 @@ export default function AppFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden">
-      {/* Mobile Header / Hamburger - Left Side */}
-      <div className="fixed top-6 left-6 z-250 md:hidden">
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-cyan-500/30 bg-black/40 backdrop-blur-xl shadow-[0_0_20px_rgba(34,211,238,0.2)] text-cyan-200 active:scale-90 transition-all"
-          aria-label="Toggle Menu"
-        >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
 
       {/* Mobile Profile Icon - Right Side */}
       {!mobileMenuOpen && (

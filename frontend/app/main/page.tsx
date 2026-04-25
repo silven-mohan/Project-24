@@ -203,8 +203,8 @@ export default function MainPage() {
 
       <KineticPage pageKey="main" className="relative z-10 flex min-h-screen w-full flex-col px-4 py-4 page-offset">
         {/* Hero Section */}
-        <section className="flex min-h-[80vh] w-full flex-col items-center justify-center relative px-4 md:px-0">
-          <KineticCard className="w-full max-w-4xl h-[320px] md:h-[600px] bg-[#0a0e1a]/40 border border-white/10 rounded-[32px] overflow-hidden flex items-center justify-center relative">
+        <section className="flex min-h-[80vh] w-full flex-col items-center justify-center relative px-4 md:px-0 py-12">
+          <KineticCard className="w-full max-w-4xl min-h-[300px] h-auto py-12 md:h-[600px] bg-[#0a0e1a]/40 border border-white/10 rounded-[32px] overflow-hidden flex items-center justify-center relative">
             <h1 className="text-center select-none hero-heading-glow text-5xl md:text-8xl font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent uppercase">
               PROJECT 24
             </h1>
