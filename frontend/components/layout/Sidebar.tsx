@@ -22,9 +22,10 @@ type SectionItem = {
 
 type SidebarProps = {
   hideTopOffset?: boolean;
+  mobileOpen?: boolean;
 };
 
-export default function Sidebar({ hideTopOffset = false }: SidebarProps) {
+export default function Sidebar({ hideTopOffset = false, mobileOpen = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, userData } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
@@ -143,9 +144,13 @@ export default function Sidebar({ hideTopOffset = false }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 z-40 hidden md:flex",
+        "fixed left-0 z-40 transition-transform duration-300 md:translate-x-0",
         hideTopOffset ? "top-0 h-dvh" : "top-16 h-[calc(100dvh-4rem)]",
-        collapsed ? "w-[54px]" : "w-[220px]"
+        // Desktop behavior (stable)
+        "hidden md:flex",
+        collapsed ? "md:w-[54px]" : "md:w-[220px]",
+        // Mobile behavior (additive overrides)
+        mobileOpen ? "flex translate-x-0 w-[260px]" : "-translate-x-full"
       )}
     >
       <BorderGlow

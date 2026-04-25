@@ -474,3 +474,63 @@
   color: rgba(255, 255, 255, 0.2);
   margin-bottom: 8px;
 }
+
+/* ═══════════════════════════════════════════════
+   Mobile/Tablet Adjustments (Additive Only)
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 0 16px;
+  }
+
+  .profile-header {
+    padding: 40px 10px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .profile-username {
+    font-size: 32px !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .profile-avatar {
+    width: 110px !important;
+    height: 110px !important;
+  }
+
+  .stealth-card {
+    padding: 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .stealth-card__title {
+    font-size: 15px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .profile-grid {
+    gap: 20px !important;
+  }
+
+  .posts-feed {
+    gap: 16px !important;
+  }
+
+  .post-card {
+    padding: 16px !important;
+  }
+
+  .post-content {
+    font-size: 14px !important;
+  }
+
+  /* Modal adjustments for small screens */
+  .modal-card {
+    padding: 24px !important;
+    border-radius: 20px !important;
+  }
+
+  .modal-title {
+    font-size: 20px !important;
+  }
+}
