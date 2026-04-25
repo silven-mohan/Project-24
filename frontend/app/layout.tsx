@@ -76,6 +76,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  verification: {
+    google: [
+      "d3woJ0p4_FkKHaxzTbizuORqRinronJRRUWp9ksYoSY",
+      "google673575b69757ed8d"
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -89,7 +95,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full w-full antialiased`}
     >
       <head>
-        <meta name="google-site-verification" content="d3woJ0p4_FkKHaxzTbizuORqRinronJRRUWp9ksYoSY" />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
