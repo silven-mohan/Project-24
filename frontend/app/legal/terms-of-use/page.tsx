@@ -6,12 +6,12 @@ export default function TermsOfUse() {
   return (
     <LegalPage
       title="Terms of Use"
-      subtitle="By accessing or using Project 24, you agree to be bound by these terms. Please read them carefully before using the platform."
+      subtitle="By signing in, creating an account, or using Project 24, you agree to be bound by these terms. Please read them carefully before using the platform."
       lastUpdated="April 25, 2026"
       sections={[
         {
           heading: "Acceptance of Terms",
-          body: "By creating an account or using any part of Project 24, you agree to these Terms of Use and our Privacy Policy. If you do not agree, you must not use the platform. We reserve the right to update these terms at any time. Continued use after updates constitutes acceptance.",
+          body: "By signing in, creating an account, or using any part of Project 24, you agree to be bound by these Terms of Use and our Privacy Policy. If you do not agree, you must not use the platform. We reserve the right to update these terms at any time. Continued use after updates constitutes acceptance.",
         },
         {
           heading: "Eligibility",
@@ -72,7 +72,7 @@ export default function TermsOfUse() {
         },
         {
           heading: "Contact",
-          body: "For questions about these Terms of Use, please contact us at: support@project24.dev or via the Project 24 GitHub repository.",
+          body: "For questions about these Terms of Use, please contact us at: silven667@gmail.com or via the Project 24 GitHub repository.",
         },
       ]}
     />

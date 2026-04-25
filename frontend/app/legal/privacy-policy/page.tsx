@@ -6,12 +6,12 @@ export default function PrivacyPolicy() {
   return (
     <LegalPage
       title="Privacy Policy"
-      subtitle="We are committed to protecting your privacy. This policy explains what personal data we collect, how we use it, and the choices you have."
+      subtitle="We are committed to protecting your privacy. By signing in, creating an account, or using Project 24, you agree to the collection and use of information in accordance with this policy."
       lastUpdated="April 25, 2026"
       sections={[
         {
           heading: "Who We Are",
-          body: "Project 24 (accessible at project-24-pi.vercel.app) is a peer-to-peer learning platform built to connect learners through challenges, hackathons, webinars, and study groups. For privacy-related questions, contact us at: support@project24.dev",
+          body: "Project 24 (accessible at project-24-pi.vercel.app) is a peer-to-peer learning platform built to connect learners through challenges, hackathons, webinars, and study groups. For privacy-related questions, contact us at: silven667@gmail.com",
         },
         {
           heading: "Information We Collect",
@@ -65,11 +65,11 @@ export default function PrivacyPolicy() {
         },
         {
           heading: "Changes to This Policy",
-          body: "We may update this Privacy Policy from time to time. When we make material changes, we will update the 'Last updated' date at the top of this page. Continued use of the platform after changes constitutes acceptance of the updated policy.",
+          body: "We may update this Privacy Policy from time to time. When we make material changes, we will update the 'Last updated' date at the top of this page. By signing in, creating an account, or continued use of the platform, you agree to the latest version of this policy.",
         },
         {
           heading: "Contact Us",
-          body: "For any privacy-related inquiries, please reach out via the Project 24 GitHub repository or email: support@project24.dev",
+          body: "For any privacy-related inquiries, please reach out via the Project 24 GitHub repository or email: silven667@gmail.com",
         },
       ]}
     />

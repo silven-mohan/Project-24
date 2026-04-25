@@ -301,14 +301,6 @@ The app will be available at **http://localhost:3000**
 
 ---
 
-## ⚖️ Legal
-
-- [Privacy Policy](https://project-24-pi.vercel.app/legal/privacy-policy)
-- [Terms of Use](https://project-24-pi.vercel.app/legal/terms-of-use)
-- [Cookie Policy](https://project-24-pi.vercel.app/legal/cookie-policy)
-
----
-
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
@@ -333,6 +325,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](./LICEN
   <p>
     <a href="https://project-24-pi.vercel.app">Live Site</a> ·
     <a href="https://project-24-pi.vercel.app/legal/privacy-policy">Privacy</a> ·
-    <a href="https://project-24-pi.vercel.app/legal/terms-of-use">Terms</a>
+    <a href="https://project-24-pi.vercel.app/legal/terms-of-use">Terms</a> ·
+    <a href="mailto:silven667@gmail.com">Contact</a>
   </p>
 </div>

@@ -287,42 +287,6 @@ export default function Sidebar({ hideTopOffset = false, mobileOpen = false }: S
               </nav>
             </div>
 
-            {user && isExpanded && (
-              <div className="mt-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between px-2">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#12908f]">Connections</span>
-                  <span className="text-[10px] font-bold text-[#666]">{connections.length}</span>
-                </div>
-                <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto no-scrollbar">
-                  {connections.length > 0 ? connections.map((friend) => (
-                    <Link
-                      key={friend.id}
-                      href={`/profile/${friend.id}`}
-                      className="flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/5 group"
-                    >
-                      <div className="relative shrink-0">
-                        <div className="h-7 w-7 rounded-full border border-[#0d6e6e]/30 bg-[#084444]/20 overflow-hidden flex items-center justify-center">
-                          {friend.profile_picture ? (
-                            <img src={friend.profile_picture} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-[10px] font-bold text-[#12908f]">{friend.username?.[0] || 'U'}</span>
-                          )}
-                        </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-[#090909] bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.4)]" />
-                      </div>
-                      <span className="truncate text-[11px] font-medium text-[#888] group-hover:text-[#e8e8e8]">
-                        {friend.username || "Synthesizer"}
-                      </span>
-                      <UserCheck size={12} className="ml-auto text-[#12908f]/40 group-hover:text-cyan-500/60" />
-                    </Link>
-                  )) : (
-                    <div className="px-2 py-3 text-center text-[10px] italic text-[#666]">
-                      No signals found...
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </BorderGlow>

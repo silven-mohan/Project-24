@@ -6,7 +6,7 @@ export default function CookiePolicy() {
   return (
     <LegalPage
       title="Cookie Policy"
-      subtitle="This policy explains how Project 24 uses cookies and similar tracking technologies on our platform, and what choices you have."
+      subtitle="This policy explains how we use tracking technologies. By signing in, creating an account, or using Project 24, you agree to our use of cookies and tracking as described below."
       lastUpdated="April 25, 2026"
       sections={[
         {
@@ -57,11 +57,11 @@ export default function CookiePolicy() {
         },
         {
           heading: "Changes to This Policy",
-          body: "We may update this Cookie Policy from time to time to reflect changes in our practices or applicable regulations. When we make changes, we will update the 'Last updated' date at the top of this page.",
+          body: "We may update this Cookie Policy from time to time to reflect changes in our practices or applicable regulations. By signing in, creating an account, or continued use of the platform, you agree to the latest version of this policy. When we make changes, we will update the 'Last updated' date at the top of this page.",
         },
         {
           heading: "Contact Us",
-          body: "If you have any questions about our use of cookies or tracking technologies, please contact us at: support@project24.dev",
+          body: "If you have any questions about our use of cookies or tracking technologies, please contact us at: silven667@gmail.com",
         },
       ]}
     />
