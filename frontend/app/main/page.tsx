@@ -203,8 +203,8 @@ export default function MainPage() {
 
       <KineticPage pageKey="main" className="relative z-10 flex min-h-screen w-full flex-col px-4 py-4 page-offset">
         {/* Hero Section */}
-        <section className="flex min-h-[60vh] w-full flex-col items-center justify-center relative px-4 md:px-0 py-12">
-          <h1 className="text-center select-none hero-heading-glow text-6xl md:text-9xl font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent uppercase">
+        <section className="flex min-h-[40vh] w-full flex-col items-center justify-center relative px-4 md:px-0 py-8">
+          <h1 className="text-center select-none hero-heading-glow text-[var(--font-size-hero)] font-black tracking-tighter bg-linear-to-b from-white/90 via-white/40 to-white/5 bg-clip-text text-transparent uppercase">
             PROJECT 24
           </h1>
           
@@ -224,15 +224,14 @@ export default function MainPage() {
               coneSpread={24}
               animated={false}
               colors={["#67e8f9", "#38bdf8", "#0ea5e9"]}
-              className="w-full"
+              className="w-full overflow-hidden"
             >
               <iframe
                 ref={iframeRef}
                 src="/project24-learning-guide.html"
+                className="w-full h-[800px] md:h-[1700px]"
                 style={{
-                  width: "100%",
                   maxWidth: "900px",
-                  height: "1700px",
                   border: "none",
                   borderRadius: "8px",
                   display: "block",
