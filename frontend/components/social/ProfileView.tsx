@@ -238,7 +238,6 @@ export default function ProfileView({ targetUserId, isSelf: initialIsSelf }: Pro
     { label: "New Post", icon: <PlusCircle size={18} />, action: () => setNewPostModalOpen(true) },
     { label: "Edit Profile", icon: <UserCircle size={18} />, action: () => { setTempUsername(username); setTempAbout(aboutMe); setEditModalOpen(true); } },
     { label: "Activity Log", icon: <Activity size={18} />, action: () => router.push("/profile/activity") },
-    { label: "Privacy Policy", icon: <Shield size={18} />, action: () => setPrivacyModalOpen(true) },
     { label: "Log out", icon: <LogOut size={18} />, action: async () => { await signOutUser(); router.push("/main"); }, danger: true },
   ];
 
